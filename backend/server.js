@@ -4,6 +4,9 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import { testConnection } from './config/database.js';
 
+import authRoutes from './routes/authRoutes.js';
+import incidenciaRoutes from './routes/incidenciaRoutes.js';
+
 import Usuari from './models/Usuari.js';
 import Incidencia from './models/Incidencia.js';
 import Indicatiu from './models/Indicatiu.js';
@@ -96,6 +99,12 @@ app.get('/', (req, res) => {
     },
   });
 });
+
+// Rutes d'autenticació
+app.use('/api/auth', authRoutes);
+
+// Rutes d'incidencies
+app.use('/api/incidencies', incidenciaRoutes);
 
 
 
