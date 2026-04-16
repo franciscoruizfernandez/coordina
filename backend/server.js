@@ -4,12 +4,19 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import { testConnection } from './config/database.js';
 
-import authRoutes from './routes/authRoutes.js';
-import incidenciaRoutes from './routes/incidenciaRoutes.js';
 
 import Usuari from './models/Usuari.js';
 import Incidencia from './models/Incidencia.js';
 import Indicatiu from './models/Indicatiu.js';
+
+
+// Rutes
+import authRoutes         from './routes/authRoutes.js';
+import incidenciaRoutes   from './routes/incidenciaRoutes.js';
+import indicatiuRoutes    from './routes/indicatiuRoutes.js';
+import assignacioRoutes   from './routes/assignacioRoutes.js';
+import tracabilitatRoutes from './routes/tracabilitatRoutes.js';
+
 
 // Carregar variables d'entorn
 dotenv.config();
@@ -100,11 +107,12 @@ app.get('/', (req, res) => {
   });
 });
 
-// Rutes d'autenticació
-app.use('/api/auth', authRoutes);
 
-// Rutes d'incidencies
-app.use('/api/incidencies', incidenciaRoutes);
+app.use('/api/auth',          authRoutes);
+app.use('/api/incidencies',   incidenciaRoutes);
+app.use('/api/indicatius',    indicatiuRoutes);
+app.use('/api/assignacions',  assignacioRoutes);
+app.use('/api/tracabilitat',  tracabilitatRoutes);
 
 
 

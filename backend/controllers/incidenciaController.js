@@ -1,17 +1,21 @@
 // backend/controllers/incidenciaController.js
 
-import Incidencia, {
-  TIPOLOGIES,
-  PRIORITATS,
-  ESTATS,
-} from '../models/Incidencia.js';
+import Incidencia, { TIPOLOGIES, PRIORITATS, ESTATS } from '../models/Incidencia.js';
 import EsdevenimentTracabilitat from '../models/EsdevenimentTracabilitat.js';
+import { esDinsRegio, missatgeForaDeRegio } from '../utils/limitGeografic.js';
 
 // ==============================================================
-// HELPER: Registrar esdeveniment de traçabilitat
-// Funció interna per no duplicar codi
+// HELPER INTERN: Registrar traçabilitat
+// No llança error si falla (no bloqueja el flux principal)
 // ==============================================================
-const registrarEsdeveniment = async (tipus, usuariId, incidenciaId, indicatiuId, descripcio, dades = {}) => {
+const registrarEsdeveniment = async (
+  tipus,
+  usuariId,
+  incidenciaId,
+  indicatiuId,
+  descripcio,
+  dades = {}
+) => {
   try {
     await EsdevenimentTracabilitat.registrar({
       tipus_esdeveniment: tipus,
@@ -22,16 +26,14 @@ const registrarEsdeveniment = async (tipus, usuariId, incidenciaId, indicatiuId,
       dades_addicionals: dades,
     });
   } catch (err) {
-    // La traçabilitat NO bloqueja el flux principal
     console.error('⚠️  Error registrant traçabilitat:', err.message);
   }
 };
 
 // ==============================================================
 // GET /api/incidencies
-// Llistar incidències amb paginació i filtres
-// Accessible: operador_sala, administrador
-// US011
+// Llistar amb paginació i filtres
+// Rols: operador_sala, administrador
 // ==============================================================
 export const llistarIncidencies = async (req, res, next) => {
   try {
@@ -41,21 +43,18 @@ export const llistarIncidencies = async (req, res, next) => {
       estat,
       prioritat,
       tipologia,
-      sector,
     } = req.query;
 
-    // Validar paginació
     const paginaNum = parseInt(pagina);
     const limitNum = Math.min(parseInt(limit), 100);
 
     if (isNaN(paginaNum) || paginaNum < 1) {
       return res.status(400).json({
         error: true,
-        missatge: 'El paràmetre "pagina" ha de ser un número positiu',
+        missatge: '"pagina" ha de ser un número positiu',
       });
     }
 
-    // Validar filtres si s'envien
     if (estat && !ESTATS.includes(estat)) {
       return res.status(400).json({
         error: true,
@@ -76,7 +75,6 @@ export const llistarIncidencies = async (req, res, next) => {
       estat: estat || null,
       prioritat: prioritat || null,
       tipologia: tipologia || null,
-      sector: sector || null,
     });
 
     res.json({
@@ -91,9 +89,8 @@ export const llistarIncidencies = async (req, res, next) => {
 
 // ==============================================================
 // GET /api/incidencies/actives
-// Obtenir incidències actives per al mapa
-// Accessible: operador_sala, administrador
-// US011
+// Incidències actives per al mapa en temps real
+// Rols: tots
 // ==============================================================
 export const obtenirActives = async (req, res, next) => {
   try {
@@ -105,7 +102,7 @@ export const obtenirActives = async (req, res, next) => {
       dades: incidencies,
     });
   } catch (error) {
-    console.error('❌ Error obtenint incidències actives:', error);
+    console.error('❌ Error obtenint actives:', error);
     next(error);
   }
 };
@@ -113,8 +110,7 @@ export const obtenirActives = async (req, res, next) => {
 // ==============================================================
 // GET /api/incidencies/:id
 // Detall d'una incidència
-// Accessible: operador_sala, administrador, patrulla (la pròpia)
-// US011
+// Rols: tots
 // ==============================================================
 export const obtenirIncidencia = async (req, res, next) => {
   try {
@@ -141,8 +137,7 @@ export const obtenirIncidencia = async (req, res, next) => {
 // ==============================================================
 // POST /api/incidencies
 // Crear nova incidència (simula recepció 112)
-// Accessible: operador_sala, administrador
-// US011
+// Rols: operador_sala, administrador
 // ==============================================================
 export const crearIncidencia = async (req, res, next) => {
   try {
@@ -156,12 +151,25 @@ export const crearIncidencia = async (req, res, next) => {
       observacions,
     } = req.body;
 
-    // --- Validació de camps obligatoris ---
-    if (!ubicacio_lat || !ubicacio_lon || !tipologia || !prioritat || !descripcio) {
+    // --- Validació camps obligatoris ---
+    if (
+      ubicacio_lat === undefined ||
+      ubicacio_lon === undefined ||
+      !tipologia ||
+      !prioritat ||
+      !descripcio
+    ) {
       return res.status(400).json({
         error: true,
-        missatge: 'Els camps ubicacio_lat, ubicacio_lon, tipologia, prioritat i descripcio són obligatoris',
-        campsObligatoris: ['ubicacio_lat', 'ubicacio_lon', 'tipologia', 'prioritat', 'descripcio'],
+        missatge:
+          'Els camps ubicacio_lat, ubicacio_lon, tipologia, prioritat i descripcio són obligatoris',
+        campsObligatoris: [
+          'ubicacio_lat',
+          'ubicacio_lon',
+          'tipologia',
+          'prioritat',
+          'descripcio',
+        ],
       });
     }
 
@@ -183,11 +191,17 @@ export const crearIncidencia = async (req, res, next) => {
       });
     }
 
+    // Validació límit geogràfic de la regió
+    if (!esDinsRegio(lat, lon)) {
+      return res.status(400).json(missatgeForaDeRegio(lat, lon));
+    }
+
     // --- Validació tipologia ---
     if (!TIPOLOGIES.includes(tipologia)) {
       return res.status(400).json({
         error: true,
         missatge: `Tipologia invàlida. Ha de ser una de: ${TIPOLOGIES.join(', ')}`,
+        tipologiesValides: TIPOLOGIES,
       });
     }
 
@@ -196,6 +210,7 @@ export const crearIncidencia = async (req, res, next) => {
       return res.status(400).json({
         error: true,
         missatge: `Prioritat invàlida. Ha de ser una de: ${PRIORITATS.join(', ')}`,
+        prioritatsValides: PRIORITATS,
       });
     }
 
@@ -210,14 +225,14 @@ export const crearIncidencia = async (req, res, next) => {
       observacions: observacions || null,
     });
 
-    // ✅ US014: Registrar a traçabilitat
+    // ✅ Registrar a traçabilitat
     await registrarEsdeveniment(
       'creacio_incidencia',
       req.usuari?.userId || null,
       novaIncidencia.id,
       null,
       `Nova incidència creada: ${tipologia} - Prioritat: ${prioritat}`,
-      { tipologia, prioritat, sector: novaIncidencia.sector_territorial }
+      { tipologia, prioritat }
     );
 
     res.status(201).json({
@@ -233,9 +248,8 @@ export const crearIncidencia = async (req, res, next) => {
 
 // ==============================================================
 // PUT /api/incidencies/:id
-// Actualitzar incidència completa
-// Accessible: operador_sala, administrador
-// US011
+// Actualització completa
+// Rols: operador_sala, administrador
 // ==============================================================
 export const actualitzarIncidencia = async (req, res, next) => {
   try {
@@ -259,7 +273,7 @@ export const actualitzarIncidencia = async (req, res, next) => {
       });
     }
 
-    // No es pot modificar una incidència tancada
+    // No es pot modificar una tancada
     if (incidenciaExistent.estat === 'tancada') {
       return res.status(400).json({
         error: true,
@@ -268,10 +282,17 @@ export const actualitzarIncidencia = async (req, res, next) => {
     }
 
     // Validar camps obligatoris
-    if (!ubicacio_lat || !ubicacio_lon || !tipologia || !prioritat || !descripcio) {
+    if (
+      ubicacio_lat === undefined ||
+      ubicacio_lon === undefined ||
+      !tipologia ||
+      !prioritat ||
+      !descripcio
+    ) {
       return res.status(400).json({
         error: true,
-        missatge: 'Els camps ubicacio_lat, ubicacio_lon, tipologia, prioritat i descripcio són obligatoris',
+        missatge:
+          'Els camps ubicacio_lat, ubicacio_lon, tipologia, prioritat i descripcio són obligatoris',
       });
     }
 
@@ -280,10 +301,21 @@ export const actualitzarIncidencia = async (req, res, next) => {
     const lon = parseFloat(ubicacio_lon);
 
     if (isNaN(lat) || lat < -90 || lat > 90) {
-      return res.status(400).json({ error: true, missatge: 'Latitud invàlida' });
+      return res.status(400).json({
+        error: true,
+        missatge: 'La latitud ha de ser un número entre -90 i 90',
+      });
     }
     if (isNaN(lon) || lon < -180 || lon > 180) {
-      return res.status(400).json({ error: true, missatge: 'Longitud invàlida' });
+      return res.status(400).json({
+        error: true,
+        missatge: 'La longitud ha de ser un número entre -180 i 180',
+      });
+    }
+
+    // ✅ Validació límit geogràfic de la regió
+    if (!esDinsRegio(lat, lon)) {
+      return res.status(400).json(missatgeForaDeRegio(lat, lon));
     }
 
     // Validar tipologia i prioritat
@@ -303,14 +335,14 @@ export const actualitzarIncidencia = async (req, res, next) => {
     const incidenciaActualitzada = await Incidencia.actualitzar(id, {
       ubicacio_lat: lat,
       ubicacio_lon: lon,
-      direccio,
+      direccio: direccio || null,
       tipologia,
       prioritat,
       descripcio,
-      observacions,
+      observacions: observacions || null,
     });
 
-    // ✅ US014: Registrar modificació
+    // ✅ Registrar a traçabilitat
     await registrarEsdeveniment(
       'modificacio_incidencia',
       req.usuari?.userId,
@@ -319,7 +351,8 @@ export const actualitzarIncidencia = async (req, res, next) => {
       `Incidència modificada`,
       {
         canvis: { tipologia, prioritat, direccio },
-        estat_anterior: incidenciaExistent.estat,
+        prioritat_anterior: incidenciaExistent.prioritat,
+        tipologia_anterior: incidenciaExistent.tipologia,
       }
     );
 
@@ -336,16 +369,14 @@ export const actualitzarIncidencia = async (req, res, next) => {
 
 // ==============================================================
 // PATCH /api/incidencies/:id/estat
-// Canviar estat de la incidència
-// Accessible: operador_sala, administrador
-// US011
+// Canviar estat amb validació de transicions
+// Rols: operador_sala, administrador
 // ==============================================================
 export const canviarEstatIncidencia = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { estat, observacions } = req.body;
 
-    // Validar estat
     if (!estat) {
       return res.status(400).json({
         error: true,
@@ -360,7 +391,6 @@ export const canviarEstatIncidencia = async (req, res, next) => {
       });
     }
 
-    // Verificar que existeix
     const incidenciaExistent = await Incidencia.trobarPerId(id);
     if (!incidenciaExistent) {
       return res.status(404).json({
@@ -369,35 +399,39 @@ export const canviarEstatIncidencia = async (req, res, next) => {
       });
     }
 
-    // No es pot canviar l'estat d'una incidència ja tancada
+    // No es pot canviar estat d'una tancada
     if (incidenciaExistent.estat === 'tancada') {
       return res.status(400).json({
         error: true,
-        missatge: 'No es pot canviar l\'estat d\'una incidència tancada',
+        missatge: "No es pot canviar l'estat d'una incidència tancada",
       });
     }
 
-    // Validar transicions d'estat permeses
+    // Validar transicions permeses
     const transicionsPermeses = {
       nova:      ['assignada', 'tancada'],
       assignada: ['en_curs', 'nova', 'tancada'],
       en_curs:   ['resolta', 'tancada'],
       resolta:   ['tancada'],
-      tancada:   [], // Estat final
+      tancada:   [],
     };
 
     const estatActual = incidenciaExistent.estat;
     if (!transicionsPermeses[estatActual].includes(estat)) {
       return res.status(400).json({
         error: true,
-        missatge: `Transició d'estat no permesa: ${estatActual} → ${estat}`,
+        missatge: `Transició no permesa: ${estatActual} → ${estat}`,
         transicionsPermeses: transicionsPermeses[estatActual],
       });
     }
 
-    const incidenciaActualitzada = await Incidencia.canviarEstat(id, estat, observacions);
+    const incidenciaActualitzada = await Incidencia.canviarEstat(
+      id,
+      estat,
+      observacions || null
+    );
 
-    // ✅ US014: Registrar canvi d'estat
+    // ✅ Registrar a traçabilitat
     await registrarEsdeveniment(
       'canvi_estat_incidencia',
       req.usuari?.userId,
@@ -420,14 +454,13 @@ export const canviarEstatIncidencia = async (req, res, next) => {
 
 // ==============================================================
 // DELETE /api/incidencies/:id
-// Tancament (soft delete - marca com tancada)
-// Accessible: operador_sala, administrador
-// US011
+// Tancament (soft delete - no elimina de la BD)
+// Rols: operador_sala, administrador
 // ==============================================================
 export const tancarIncidencia = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { observacions } = req.body;
+    const { observacions } = req.body || {};
 
     const incidenciaExistent = await Incidencia.trobarPerId(id);
     if (!incidenciaExistent) {
@@ -444,16 +477,19 @@ export const tancarIncidencia = async (req, res, next) => {
       });
     }
 
-    const incidenciaTancada = await Incidencia.tancar(id, observacions);
+    const incidenciaTancada = await Incidencia.tancar(id, observacions || null);
 
-    // ✅ US014: Registrar tancament
+    // ✅ Registrar a traçabilitat
     await registrarEsdeveniment(
       'tancament_incidencia',
       req.usuari?.userId,
       id,
       null,
       `Incidència tancada`,
-      { estat_anterior: incidenciaExistent.estat, observacions }
+      {
+        estat_anterior: incidenciaExistent.estat,
+        observacions: observacions || null,
+      }
     );
 
     res.json({
@@ -469,9 +505,8 @@ export const tancarIncidencia = async (req, res, next) => {
 
 // ==============================================================
 // GET /api/incidencies/:id/historial
-// Historial d'accions d'una incidència
-// Accessible: operador_sala, administrador
-// US011
+// Historial complet d'accions d'una incidència
+// Rols: operador_sala, administrador
 // ==============================================================
 export const obtenirHistorial = async (req, res, next) => {
   try {

@@ -1,142 +1,197 @@
 // backend/models/Indicatiu.js
-import pool from '../config/database.js';
+
+import { pool } from '../config/database.js';
+
+export const TIPUS_UNITAT = ['cotxe', 'moto', 'furgoneta'];
+export const ESTATS_OPERATIUS = ['disponible', 'en_servei', 'no_disponible', 'finalitzat'];
 
 class Indicatiu {
   // ==============================================================
-  // CREAR INDICATIU
+  // LLISTAR TOTS AMB FILTRES
   // ==============================================================
-  static async crear({ codi, tipus_unitat, sector_assignat }) {
-    const query = `
-      INSERT INTO indicatius (codi, tipus_unitat, sector_assignat, estat_operatiu)
-      VALUES ($1, $2, $3, 'disponible')
-      RETURNING *
-    `;
-    const valors = [codi, tipus_unitat, sector_assignat];
+  static async llistarTots({ estat_operatiu = null } = {}) {
+    let condicions = [];
+    let valors = [];
+    let idx = 1;
 
-    try {
-      const resultat = await pool.query(query, valors);
-      return resultat.rows[0];
-    } catch (error) {
-      console.error('❌ Error creant indicatiu:', error);
-      throw error;
+    if (estat_operatiu) {
+      condicions.push(`estat_operatiu = $${idx++}`);
+      valors.push(estat_operatiu);
     }
+
+    const clausulaWhere =
+      condicions.length > 0 ? `WHERE ${condicions.join(' AND ')}` : '';
+
+    const consulta = `
+      SELECT
+        i.*,
+        inc.tipologia      AS incidencia_tipologia,
+        inc.prioritat      AS incidencia_prioritat,
+        inc.estat          AS incidencia_estat,
+        inc.direccio       AS incidencia_direccio
+      FROM indicatius i
+      LEFT JOIN incidencies inc ON i.incidencia_assignada_id = inc.id
+      ${clausulaWhere}
+      ORDER BY i.codi ASC
+    `;
+
+    const resultat = await pool.query(consulta, valors);
+    return resultat.rows;
+  }
+
+  // ==============================================================
+  // TROBAR DISPONIBLES (per a l'assignació automàtica)
+  // ==============================================================
+  static async trobarDisponibles() {
+    const consulta = `
+      SELECT *
+      FROM indicatius
+      WHERE estat_operatiu = 'disponible'
+        AND ubicacio_lat IS NOT NULL
+        AND ubicacio_lon IS NOT NULL
+      ORDER BY codi ASC
+    `;
+    const resultat = await pool.query(consulta);
+    return resultat.rows;
   }
 
   // ==============================================================
   // TROBAR PER ID
   // ==============================================================
   static async trobarPerId(id) {
-    const query = 'SELECT * FROM indicatius WHERE id = $1';
-    
-    try {
-      const resultat = await pool.query(query, [id]);
-      return resultat.rows[0] || null;
-    } catch (error) {
-      console.error('❌ Error trobant indicatiu:', error);
-      throw error;
-    }
+    const consulta = `
+      SELECT
+        i.*,
+        inc.tipologia AS incidencia_tipologia,
+        inc.prioritat AS incidencia_prioritat,
+        inc.estat     AS incidencia_estat,
+        inc.direccio  AS incidencia_direccio,
+        inc.ubicacio_lat AS incidencia_lat,
+        inc.ubicacio_lon AS incidencia_lon
+      FROM indicatius i
+      LEFT JOIN incidencies inc ON i.incidencia_assignada_id = inc.id
+      WHERE i.id = $1
+    `;
+    const resultat = await pool.query(consulta, [id]);
+    return resultat.rows[0] || null;
   }
 
   // ==============================================================
-  // TROBAR PER CODI
+  // TROBAR PER CODI (ex: "A-101")
   // ==============================================================
   static async trobarPerCodi(codi) {
-    const query = 'SELECT * FROM indicatius WHERE codi = $1';
-    
-    try {
-      const resultat = await pool.query(query, [codi]);
-      return resultat.rows[0] || null;
-    } catch (error) {
-      console.error('❌ Error trobant indicatiu per codi:', error);
-      throw error;
-    }
+    const consulta = `SELECT * FROM indicatius WHERE codi = $1`;
+    const resultat = await pool.query(consulta, [codi]);
+    return resultat.rows[0] || null;
   }
 
   // ==============================================================
-  // LLISTAR TOTS
+  // CREAR INDICATIU
   // ==============================================================
-  static async llistarTots(filtres = {}) {
-    let query = 'SELECT * FROM indicatius WHERE 1=1';
-    const valors = [];
-    let indexParam = 1;
-
-    // Filtrar per estat operatiu
-    if (filtres.estat_operatiu) {
-      query += ` AND estat_operatiu = $${indexParam}`;
-      valors.push(filtres.estat_operatiu);
-      indexParam++;
-    }
-
-    query += ' ORDER BY codi';
-
-    try {
-      const resultat = await pool.query(query, valors);
-      return resultat.rows;
-    } catch (error) {
-      console.error('❌ Error llistant indicatius:', error);
-      throw error;
-    }
+  static async crear({ codi, tipus_unitat, sector_assignat, ubicacio_lat = null, ubicacio_lon = null }) {
+    const consulta = `
+      INSERT INTO indicatius (
+        codi,
+        tipus_unitat,
+        estat_operatiu,
+        sector_assignat,
+        ubicacio_lat,
+        ubicacio_lon
+      )
+      VALUES ($1, $2, 'disponible', $3, $4, $5)
+      RETURNING *
+    `;
+    const resultat = await pool.query(consulta, [
+      codi,
+      tipus_unitat,
+      sector_assignat || null,
+      ubicacio_lat,
+      ubicacio_lon,
+    ]);
+    return resultat.rows[0];
   }
 
   // ==============================================================
-  // ACTUALITZAR UBICACIÓ GPS
+  // ACTUALITZAR GPS
   // ==============================================================
   static async actualitzarUbicacio(id, lat, lon) {
-    const query = `
+    const consulta = `
       UPDATE indicatius
-      SET ubicacio_lat = $1,
-          ubicacio_lon = $2,
-          ultima_actualitzacio_gps = NOW()
+      SET
+        ubicacio_lat              = $1,
+        ubicacio_lon              = $2,
+        ultima_actualitzacio_gps  = NOW()
       WHERE id = $3
       RETURNING *
     `;
-
-    try {
-      const resultat = await pool.query(query, [lat, lon, id]);
-      return resultat.rows[0];
-    } catch (error) {
-      console.error('❌ Error actualitzant ubicació:', error);
-      throw error;
-    }
+    const resultat = await pool.query(consulta, [lat, lon, id]);
+    return resultat.rows[0] || null;
   }
 
   // ==============================================================
   // CANVIAR ESTAT OPERATIU
   // ==============================================================
-  static async actualitzarEstatOperatiu(id, nouEstat) {
-    const query = `
+  static async canviarEstat(id, nouEstat) {
+    const consulta = `
       UPDATE indicatius
       SET estat_operatiu = $1
       WHERE id = $2
       RETURNING *
     `;
-
-    try {
-      const resultat = await pool.query(query, [nouEstat, id]);
-      return resultat.rows[0];
-    } catch (error) {
-      console.error('❌ Error actualitzant estat operatiu:', error);
-      throw error;
-    }
+    const resultat = await pool.query(consulta, [nouEstat, id]);
+    return resultat.rows[0] || null;
   }
 
   // ==============================================================
-  // TROBAR INDICATIUS DISPONIBLES
+  // ASSIGNAR INCIDÈNCIA
   // ==============================================================
-  static async trobarDisponibles() {
-    const query = `
-      SELECT * FROM indicatius
-      WHERE estat_operatiu = 'disponible'
-      ORDER BY codi
+  static async assignarIncidencia(id, incidenciaId) {
+    const consulta = `
+      UPDATE indicatius
+      SET
+        incidencia_assignada_id = $1,
+        estat_operatiu          = 'en_servei'
+      WHERE id = $2
+      RETURNING *
     `;
+    const resultat = await pool.query(consulta, [incidenciaId, id]);
+    return resultat.rows[0] || null;
+  }
 
-    try {
-      const resultat = await pool.query(query);
-      return resultat.rows;
-    } catch (error) {
-      console.error('❌ Error trobant indicatius disponibles:', error);
-      throw error;
-    }
+  // ==============================================================
+  // DESASSIGNAR INCIDÈNCIA (alliberar indicatiu)
+  // ==============================================================
+  static async desassignarIncidencia(id) {
+    const consulta = `
+      UPDATE indicatius
+      SET
+        incidencia_assignada_id = NULL,
+        estat_operatiu          = 'disponible'
+      WHERE id = $1
+      RETURNING *
+    `;
+    const resultat = await pool.query(consulta, [id]);
+    return resultat.rows[0] || null;
+  }
+
+  // ==============================================================
+  // OBTENIR HISTORIAL GPS D'UN INDICATIU
+  // ==============================================================
+  static async obtenirHistorial(indicatiuId) {
+    const consulta = `
+      SELECT
+        et.id,
+        et.timestamp,
+        et.tipus_esdeveniment,
+        et.descripcio,
+        et.dades_addicionals
+      FROM esdeveniments_tracabilitat et
+      WHERE et.indicatiu_id = $1
+      ORDER BY et.timestamp DESC
+      LIMIT 200
+    `;
+    const resultat = await pool.query(consulta, [indicatiuId]);
+    return resultat.rows;
   }
 }
 

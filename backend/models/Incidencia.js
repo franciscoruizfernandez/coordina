@@ -2,7 +2,8 @@
 import pool from '../config/database.js';
 
 // ==============================================================
-// CONSTANTS DE DOMINIO
+// CONSTANTS DE DOMINI
+// Adaptades al CHECK de la BD
 // ==============================================================
 export const TIPOLOGIES = [
   'robatori',
@@ -16,42 +17,15 @@ export const TIPOLOGIES = [
   'altres',
 ];
 
+// Exactament els valors del CHECK a la BD
 export const PRIORITATS = ['baixa', 'mitjana', 'alta', 'critica'];
 
+// Exactament els valors del CHECK a la BD
 export const ESTATS = ['nova', 'assignada', 'en_curs', 'resolta', 'tancada'];
-
-// ==============================================================
-// CÀLCUL DE SECTOR TERRITORIAL
-// Basant-nos en coordenades, assignem un sector
-// Adaptat per a la Regió Policial Metropolitana Nord
-// ==============================================================
-export const calcularSector = (lat, lon) => {
-  // Badalona i Sant Adrià
-  if (lat >= 41.43 && lat <= 41.47 && lon >= 2.21 && lon <= 2.25) {
-    return 'Badalona-Nord';
-  }
-  if (lat >= 41.40 && lat <= 41.43 && lon >= 2.21 && lon <= 2.25) {
-    return 'Badalona-Sud';
-  }
-  // Santa Coloma de Gramenet
-  if (lat >= 41.44 && lat <= 41.47 && lon >= 2.19 && lon <= 2.22) {
-    return 'Santa-Coloma';
-  }
-  // Mataró
-  if (lat >= 41.52 && lat <= 41.56 && lon >= 2.43 && lon <= 2.47) {
-    return 'Mataro';
-  }
-  // Granollers
-  if (lat >= 41.60 && lat <= 41.63 && lon >= 2.28 && lon <= 2.32) {
-    return 'Granollers';
-  }
-  // Per defecte
-  return 'Sector-General';
-};
 
 class Incidencia {
   // ==============================================================
-  // LLISTAR INCIDÈNCIES AMB FILTRES I PAGINACIÓ
+  // LLISTAR AMB FILTRES I PAGINACIÓ
   // ==============================================================
   static async llistarTotes({
     pagina = 1,
@@ -59,7 +33,6 @@ class Incidencia {
     estat = null,
     prioritat = null,
     tipologia = null,
-    sector = null,
   } = {}) {
     let condicions = [];
     let valors = [];
@@ -77,17 +50,13 @@ class Incidencia {
       condicions.push(`tipologia = $${idx++}`);
       valors.push(tipologia);
     }
-    if (sector) {
-      condicions.push(`sector_territorial = $${idx++}`);
-      valors.push(sector);
-    }
 
     const clausulaWhere =
       condicions.length > 0 ? `WHERE ${condicions.join(' AND ')}` : '';
 
     const offset = (pagina - 1) * limitPerPagina;
 
-    // Ordre per prioritat (crítica primer) i timestamp
+    // Ordenar per prioritat (crítica primer) i després per timestamp
     const consulta = `
       SELECT *
       FROM incidencies
@@ -106,8 +75,9 @@ class Incidencia {
     `;
     valors.push(limitPerPagina, offset);
 
+    // Consulta del total per a la paginació (sense LIMIT/OFFSET)
     const consultaTotal = `
-      SELECT COUNT(*) as total
+      SELECT COUNT(*) AS total
       FROM incidencies
       ${clausulaWhere}
     `;
@@ -123,7 +93,9 @@ class Incidencia {
         paginaActual: pagina,
         limitPerPagina,
         total: parseInt(resTotal.rows[0].total),
-        totalPagines: Math.ceil(parseInt(resTotal.rows[0].total) / limitPerPagina),
+        totalPagines: Math.ceil(
+          parseInt(resTotal.rows[0].total) / limitPerPagina
+        ),
       },
     };
   }
@@ -132,29 +104,28 @@ class Incidencia {
   // TROBAR PER ID
   // ==============================================================
   static async trobarPerId(id) {
-    const consulta = `SELECT * FROM incidencies WHERE id = $1`;
+    const consulta = `
+      SELECT *
+      FROM incidencies
+      WHERE id = $1
+    `;
     const resultat = await pool.query(consulta, [id]);
     return resultat.rows[0] || null;
   }
 
   // ==============================================================
   // CREAR INCIDÈNCIA
+  // Columnes exactes de la BD: sense sector_territorial
   // ==============================================================
   static async crear({
     ubicacio_lat,
     ubicacio_lon,
-    direccio,
+    direccio = null,
     tipologia,
     prioritat,
     descripcio,
     observacions = null,
   }) {
-    // Calcular sector automàticament
-    const sector_territorial = calcularSector(
-      parseFloat(ubicacio_lat),
-      parseFloat(ubicacio_lon)
-    );
-
     const consulta = `
       INSERT INTO incidencies (
         ubicacio_lat,
@@ -164,11 +135,10 @@ class Incidencia {
         prioritat,
         descripcio,
         observacions,
-        sector_territorial,
         estat,
         timestamp_recepcio
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'nova', NOW())
+      VALUES ($1, $2, $3, $4, $5, $6, $7, 'nova', NOW())
       RETURNING *
     `;
 
@@ -180,7 +150,6 @@ class Incidencia {
       prioritat,
       descripcio,
       observacions,
-      sector_territorial,
     ]);
 
     return resultat.rows[0];
@@ -189,34 +158,30 @@ class Incidencia {
   // ==============================================================
   // ACTUALITZAR INCIDÈNCIA (PUT - actualització completa)
   // ==============================================================
-  static async actualitzar(id, {
-    ubicacio_lat,
-    ubicacio_lon,
-    direccio,
-    tipologia,
-    prioritat,
-    descripcio,
-    observacions,
-  }) {
-    // Recalcular sector si canvien les coordenades
-    const sector_territorial = calcularSector(
-      parseFloat(ubicacio_lat),
-      parseFloat(ubicacio_lon)
-    );
-
+  static async actualitzar(
+    id,
+    {
+      ubicacio_lat,
+      ubicacio_lon,
+      direccio,
+      tipologia,
+      prioritat,
+      descripcio,
+      observacions,
+    }
+  ) {
     const consulta = `
       UPDATE incidencies
       SET
-        ubicacio_lat        = $1,
-        ubicacio_lon        = $2,
-        direccio            = $3,
-        tipologia           = $4,
-        prioritat           = $5,
-        descripcio          = $6,
-        observacions        = $7,
-        sector_territorial  = $8,
-        updated_at          = NOW()
-      WHERE id = $9
+        ubicacio_lat  = $1,
+        ubicacio_lon  = $2,
+        direccio      = $3,
+        tipologia     = $4,
+        prioritat     = $5,
+        descripcio    = $6,
+        observacions  = $7,
+        updated_at    = NOW()
+      WHERE id = $8
       RETURNING *
     `;
 
@@ -228,7 +193,6 @@ class Incidencia {
       prioritat,
       descripcio,
       observacions,
-      sector_territorial,
       id,
     ]);
 
@@ -237,64 +201,47 @@ class Incidencia {
 
   // ==============================================================
   // CANVIAR ESTAT (PATCH)
+  // Si es tanca, guarda data_tancament
   // ==============================================================
   static async canviarEstat(id, nouEstat, observacions = null) {
-    // Si es tanca, guardar timestamp de tancament
-    const campsExtra =
+    // Si el nou estat és 'tancada', guardem la data de tancament
+    const consulta =
       nouEstat === 'tancada'
-        ? `, data_tancament = NOW()`
-        : '';
-
-    const consulta = `
-      UPDATE incidencies
-      SET
-        estat       = $1,
-        observacions = COALESCE($2, observacions)
-        ${campsExtra},
-        updated_at  = NOW()
-      WHERE id = $3
-      RETURNING *
-    `;
+        ? `
+          UPDATE incidencies
+          SET
+            estat          = $1,
+            observacions   = COALESCE($2, observacions),
+            data_tancament = NOW(),
+            updated_at     = NOW()
+          WHERE id = $3
+          RETURNING *
+        `
+        : `
+          UPDATE incidencies
+          SET
+            estat        = $1,
+            observacions = COALESCE($2, observacions),
+            updated_at   = NOW()
+          WHERE id = $3
+          RETURNING *
+        `;
 
     const resultat = await pool.query(consulta, [nouEstat, observacions, id]);
     return resultat.rows[0] || null;
   }
 
   // ==============================================================
-  // TANCAMENT (soft delete - marca com tancada)
+  // TANCAR INCIDÈNCIA (soft delete)
+  // No elimina el registre, marca com tancada
   // ==============================================================
   static async tancar(id, observacions = null) {
     return this.canviarEstat(id, 'tancada', observacions);
   }
 
   // ==============================================================
-  // OBTENIR HISTORIAL D'ACCIONS D'UNA INCIDÈNCIA
-  // ==============================================================
-  static async obtenirHistorial(incidenciaId) {
-    const consulta = `
-      SELECT
-        et.id,
-        et.timestamp,
-        et.tipus_esdeveniment,
-        et.descripcio,
-        et.dades_addicionals,
-        u.username   AS usuari_username,
-        u.nom_complet AS usuari_nom,
-        u.rol        AS usuari_rol,
-        i.codi       AS indicatiu_codi
-      FROM esdeveniments_tracabilitat et
-      LEFT JOIN usuaris   u ON et.usuari_id    = u.id
-      LEFT JOIN indicatius i ON et.indicatiu_id = i.id
-      WHERE et.incidencia_id = $1
-      ORDER BY et.timestamp ASC
-    `;
-    const resultat = await pool.query(consulta, [incidenciaId]);
-    return resultat.rows;
-  }
-
-  // ==============================================================
-  // OBTENIR INCIDÈNCIES ACTIVES (no tancades/resoltes)
-  // Útil per al mapa en temps real
+  // OBTENIR INCIDÈNCIES ACTIVES (no tancades ni resoltes)
+  // Per al mapa en temps real del frontend
   // ==============================================================
   static async obtenirActives() {
     const consulta = `
@@ -311,6 +258,32 @@ class Incidencia {
         timestamp_recepcio DESC
     `;
     const resultat = await pool.query(consulta);
+    return resultat.rows;
+  }
+
+  // ==============================================================
+  // OBTENIR HISTORIAL D'ACCIONS D'UNA INCIDÈNCIA
+  // JOIN amb tracabilitat, usuaris i indicatius
+  // ==============================================================
+  static async obtenirHistorial(incidenciaId) {
+    const consulta = `
+      SELECT
+        et.id,
+        et.timestamp,
+        et.tipus_esdeveniment,
+        et.descripcio,
+        et.dades_addicionals,
+        u.username    AS usuari_username,
+        u.nom_complet AS usuari_nom,
+        u.rol         AS usuari_rol,
+        i.codi        AS indicatiu_codi
+      FROM esdeveniments_tracabilitat et
+      LEFT JOIN usuaris    u ON et.usuari_id    = u.id
+      LEFT JOIN indicatius i ON et.indicatiu_id = i.id
+      WHERE et.incidencia_id = $1
+      ORDER BY et.timestamp ASC
+    `;
+    const resultat = await pool.query(consulta, [incidenciaId]);
     return resultat.rows;
   }
 }
