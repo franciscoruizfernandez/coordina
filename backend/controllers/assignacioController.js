@@ -49,12 +49,26 @@ export const crearAssignacioManual = async (req, res, next) => {
       });
     }
 
-    // La incidència ha d'estar en un estat assignable
-    if (!['nova', 'assignada'].includes(incidencia.estat)) {
+    // Només es pot assignar si està en estat 'nova'
+    if (incidencia.estat !== 'nova') {
       return res.status(400).json({
         error: true,
-        missatge: `No es pot assignar una incidència en estat "${incidencia.estat}"`,
+        missatge: `No es pot assignar una incidència en estat "${incidencia.estat}". Només es poden assignar incidències en estat "nova".`,
         estatActual: incidencia.estat,
+      });
+    }
+
+    // ✅ Comprovar si ja té una assignació activa
+    const assignacioActiva = await Assignacio.trobarActivaPerIncidencia(incidencia_id);
+    if (assignacioActiva) {
+      return res.status(400).json({
+        error: true,
+        missatge: 'Aquesta incidència ja té una assignació activa en curs',
+        assignacioActiva: {
+          id: assignacioActiva.id,
+          indicatiu_id: assignacioActiva.indicatiu_id,
+          timestamp_assignacio: assignacioActiva.timestamp_assignacio,
+        },
       });
     }
 
@@ -143,10 +157,26 @@ export const crearAssignacioAutomatica = async (req, res, next) => {
       });
     }
 
-    if (!['nova', 'assignada'].includes(incidencia.estat)) {
+    // Només es pot assignar si està en estat 'nova'
+    if (incidencia.estat !== 'nova') {
       return res.status(400).json({
         error: true,
-        missatge: `No es pot assignar una incidència en estat "${incidencia.estat}"`,
+        missatge: `No es pot assignar automàticament una incidència en estat "${incidencia.estat}". Només es poden assignar incidències en estat "nova".`,
+        estatActual: incidencia.estat,
+      });
+    }
+
+    // ✅ Comprovar si ja té una assignació activa
+    const assignacioActiva = await Assignacio.trobarActivaPerIncidencia(incidencia_id);
+    if (assignacioActiva) {
+      return res.status(400).json({
+        error: true,
+        missatge: 'Aquesta incidència ja té una assignació activa en curs',
+        assignacioActiva: {
+          id: assignacioActiva.id,
+          indicatiu_id: assignacioActiva.indicatiu_id,
+          timestamp_assignacio: assignacioActiva.timestamp_assignacio,
+        },
       });
     }
 

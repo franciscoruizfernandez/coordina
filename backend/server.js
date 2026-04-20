@@ -258,3 +258,16 @@ process.on('SIGINT', () => {
   console.log('\n👋 SIGINT rebut, tancant servidor...');
   process.exit(0);
 });
+
+// token pruebas operador sala
+// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhYTc1ZDQ3My0zOWNiLTQwMDMtYmY5ZC02OGE2YWNiZmNhY2IiLCJ1c2VybmFtZSI6Im9wZXJhZG9yMyIsInJvbCI6Im9wZXJhZG9yX3NhbGEiLCJpYXQiOjE3NzYzNTk1NjUsImV4cCI6MTc3NjQ0NTk2NX0.iwtK6D08qrOOv4JiZlRKbvSlpqHnj86nJcSEfZ4M-eU
+
+// token pruebas patrulla
+// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI0NDU0MzY5OC1iMjY3LTRhMWEtOTIwOC1mNDU2NWVlOTczOWYiLCJ1c2VybmFtZSI6InBhdHJ1bGxhMTAxIiwicm9sIjoicGF0cnVsbGEiLCJpYXQiOjE3NzYzNzc2NDAsImV4cCI6MTc3NjQ2NDA0MH0.OrJ8PteCluC9SBrBqHZit5yeXkC0ePZFSxi86gPhBm4
+
+// token pruebas admin
+// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNDRhODY1ZS1kYTY2LTRlODgtYjMyNC1kYWM4MjNkMDdhNmMiLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sIjoiYWRtaW5pc3RyYWRvciIsImlhdCI6MTc3NjM3Nzg5OCwiZXhwIjoxNzc2NDY0Mjk4fQ.8GcbiM7LpFbNTLtHx1Vvbq64qpEeyEGf6e94aCBd1Ls 
+
+// patrulla A101 77dad933-b69a-47cb-a287-3e7d81397f7d
+// incidencia 19629233-7278-478e-8714-f8403ed3a34a
+// assignacio f59dc659-88aa-41af-8ca9-d0649ce1f9b6

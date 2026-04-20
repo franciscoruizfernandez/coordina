@@ -1,6 +1,6 @@
 // backend/models/Indicatiu.js
 
-import { pool } from '../config/database.js';
+import pool from '../config/database.js';
 
 export const TIPUS_UNITAT = ['cotxe', 'moto', 'furgoneta'];
 export const ESTATS_OPERATIUS = ['disponible', 'en_servei', 'no_disponible', 'finalitzat'];

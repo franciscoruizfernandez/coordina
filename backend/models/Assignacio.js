@@ -1,6 +1,6 @@
 // backend/models/Assignacio.js
 
-import { pool } from '../config/database.js';
+import pool from '../config/database.js';
 
 export const MODES_ASSIGNACIO = ['manual', 'automatica'];
 
