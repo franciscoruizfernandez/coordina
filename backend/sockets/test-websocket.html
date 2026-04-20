@@ -1,55 +1,78 @@
+<!-- backend/test-websocket.html -->
 <!DOCTYPE html>
 <html lang="ca">
 <head>
   <meta charset="UTF-8">
-  <title>Test WebSocket COORDINA</title>
+  <title>Test Events WebSocket</title>
   <script src="https://cdn.socket.io/4.8.0/socket.io.min.js"></script>
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    #status { padding: 10px; border-radius: 5px; margin-bottom: 10px; }
-    .ok { background-color: #d4edda; color: #155724; }
-    .error { background-color: #f8d7da; color: #721c24; }
-    pre { background: #eee; padding: 10px; }
+    body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #ddd; }
+    #messages { margin-top: 20px; }
+    .event { padding: 10px; margin: 5px 0; border-left: 3px solid #4CAF50; background: #2d2d2d; }
+    .event.nova { border-color: #2196F3; }
+    .event.assignada { border-color: #FF9800; }
+    .event.gps { border-color: #9C27B0; }
   </style>
 </head>
 <body>
-  <h1>🔌 Test de connexió WebSocket</h1>
-  <div id="status">Connectant...</div>
-  <div id="error-details"></div>
+  <h1>🔌 Listener d'Events WebSocket</h1>
+  <div id="status">❌ Desconnectat</div>
+  <div id="messages"></div>
 
   <script>
-    // ⚠️ POSA AQUÍ EL TEU TOKEN REAL (copia'l de Postman)
     const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNDRhODY1ZS1kYTY2LTRlODgtYjMyNC1kYWM4MjNkMDdhNmMiLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sIjoiYWRtaW5pc3RyYWRvciIsImlhdCI6MTc3NjY4MDIzOCwiZXhwIjoxNzc2NzY2NjM4fQ.jP4Q-vQOjTIXQ9j8196q8fwD8lQWsQ3IjHgwJLERlcU'; 
 
     const socket = io('http://localhost:3000', {
-      auth: { token: TOKEN },
-      transports: ['websocket'] // Forçar websocket per evitar polling
+      auth: { token: TOKEN }
     });
 
-    const statusDiv = document.getElementById('status');
-    const errorDiv = document.getElementById('error-details');
+    socket.on('connect_error', (err) => {
+      console.log('ERROR REAL:', err.message, err);
+    });
+
+    const addMessage = (type, title, data) => {
+      const div = document.getElementById('messages');
+      const el = document.createElement('div');
+      el.className = `event ${type}`;
+      el.innerHTML = `<strong>${title}</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+      div.insertBefore(el, div.firstChild);
+    };
 
     socket.on('connect', () => {
-      statusDiv.className = 'ok';
-      statusDiv.innerHTML = '✅ CONNECTAT! ID: ' + socket.id;
-      console.log('Socket connectat:', socket.id);
+      document.getElementById('status').innerHTML = '✅ Connectat: ' + socket.id;
     });
 
     socket.on('connexio_exitosa', (data) => {
-      console.log('Servidor diu:', data);
+      addMessage('', '✅ Connexió exitosa', data);
     });
 
-    // AQUEST ÉS EL MÉS IMPORTANT PER DEBUGGAR
-    socket.on('connect_error', (error) => {
-      statusDiv.className = 'error';
-      statusDiv.innerHTML = '❌ ERROR DE CONNEXIÓ';
-      errorDiv.innerHTML = `<strong>Motiu:</strong> ${error.message}<br><strong>Descripció:</strong> ${error.description || 'Cap'}`;
-      console.error('Error detallat:', error);
+    // Events que escoltem
+    socket.on('nova_incidencia', (data) => {
+      addMessage('nova', '🆕 NOVA INCIDÈNCIA', data);
+    });
+
+    socket.on('incidencia_actualitzada', (data) => {
+      addMessage('', '📝 Incidència actualitzada', data);
+    });
+
+    socket.on('incidencia_assignada', (data) => {
+      addMessage('assignada', '🚨 INCIDÈNCIA ASSIGNADA', data);
+    });
+
+    socket.on('canvi_estat_incidencia', (data) => {
+      addMessage('', "🔄 Canvi d'estat", data);
+    });
+
+    socket.on('ubicacio_indicatiu', (data) => {
+      addMessage('gps', '📍 GPS Actualitzat', data);
+    });
+
+    socket.on('canvi_estat_indicatiu', (data) => {
+      addMessage('', '🚔 Canvi estat indicatiu', data);
     });
 
     socket.on('disconnect', () => {
-      statusDiv.className = 'error';
-      statusDiv.innerHTML = '❌ DESCONNECTAT';
+      document.getElementById('status').innerHTML = '❌ Desconnectat';
     });
   </script>
 </body>
