@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <title>Test WebSocket COORDINA</title>
+  <script src="https://cdn.socket.io/4.8.0/socket.io.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    #status { padding: 10px; border-radius: 5px; margin-bottom: 10px; }
+    .ok { background-color: #d4edda; color: #155724; }
+    .error { background-color: #f8d7da; color: #721c24; }
+    pre { background: #eee; padding: 10px; }
+  </style>
+</head>
+<body>
+  <h1>🔌 Test de connexió WebSocket</h1>
+  <div id="status">Connectant...</div>
+  <div id="error-details"></div>
+
+  <script>
+    // ⚠️ POSA AQUÍ EL TEU TOKEN REAL (copia'l de Postman)
+    const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNDRhODY1ZS1kYTY2LTRlODgtYjMyNC1kYWM4MjNkMDdhNmMiLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sIjoiYWRtaW5pc3RyYWRvciIsImlhdCI6MTc3NjY4MDIzOCwiZXhwIjoxNzc2NzY2NjM4fQ.jP4Q-vQOjTIXQ9j8196q8fwD8lQWsQ3IjHgwJLERlcU'; 
+
+    const socket = io('http://localhost:3000', {
+      auth: { token: TOKEN },
+      transports: ['websocket'] // Forçar websocket per evitar polling
+    });
+
+    const statusDiv = document.getElementById('status');
+    const errorDiv = document.getElementById('error-details');
+
+    socket.on('connect', () => {
+      statusDiv.className = 'ok';
+      statusDiv.innerHTML = '✅ CONNECTAT! ID: ' + socket.id;
+      console.log('Socket connectat:', socket.id);
+    });
+
+    socket.on('connexio_exitosa', (data) => {
+      console.log('Servidor diu:', data);
+    });
+
+    // AQUEST ÉS EL MÉS IMPORTANT PER DEBUGGAR
+    socket.on('connect_error', (error) => {
+      statusDiv.className = 'error';
+      statusDiv.innerHTML = '❌ ERROR DE CONNEXIÓ';
+      errorDiv.innerHTML = `<strong>Motiu:</strong> ${error.message}<br><strong>Descripció:</strong> ${error.description || 'Cap'}`;
+      console.error('Error detallat:', error);
+    });
+
+    socket.on('disconnect', () => {
+      statusDiv.className = 'error';
+      statusDiv.innerHTML = '❌ DESCONNECTAT';
+    });
+  </script>
+</body>
+</html>
