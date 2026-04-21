@@ -31,7 +31,7 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 // ==============================================================
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:5173', 'http://localhost:5174'];
+  : ['http://localhost:5173', 'http://localhost:5174', 'http://127.0.0.1:5500'];
 
 const corsOptions = {
   origin: (origin, callback) => {

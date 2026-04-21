@@ -2,193 +2,161 @@
 <html lang="ca">
 <head>
   <meta charset="UTF-8">
-  <title>Test Events Clients → Servidor</title>
+  <title>Test WebSocket COORDINA</title>
   <script src="https://cdn.socket.io/4.8.0/socket.io.min.js"></script>
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
-    button { padding: 10px 20px; margin: 5px; cursor: pointer; }
-    .success { background: #4CAF50; color: white; border: none; }
-    .warning { background: #FF9800; color: white; border: none; }
-    .danger { background: #f44336; color: white; border: none; }
-    #log { margin-top: 20px; background: white; padding: 15px; border: 1px solid #ddd; max-height: 400px; overflow-y: auto; }
-    .log-entry { padding: 8px; margin: 3px 0; border-left: 3px solid #2196F3; background: #f9f9f9; }
+    body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+    input, button { padding: 8px; margin: 5px; }
+    #status { margin-top: 10px; font-weight: bold; }
+    #log { margin-top: 20px; background: white; padding: 10px; max-height: 400px; overflow-y: auto; }
+    .ok { color: green; }
+    .error { color: red; }
   </style>
 </head>
 <body>
-  <h1>🧪 Test Events WebSocket (Client → Servidor)</h1>
-  <div id="status">❌ Desconnectat</div>
 
-  <h2>Accions disponibles:</h2>
+<h1>🔌 Test WebSocket COORDINA</h1>
 
-  <button class="success" onclick="actualitzarGPS()">📍 Actualitzar GPS</button>
-  <button class="warning" onclick="canviarEstat()">🚔 Canviar Estat (en_servei)</button>
-  <button onclick="enviarMissatge()">💬 Enviar Missatge</button>
-  <button class="success" onclick="acceptarAssignacio()">✅ Acceptar Assignació</button>
-  <button class="danger" onclick="rebutjarAssignacio()">❌ Rebutjar Assignació</button>
+<h2>Login</h2>
+<input type="text" id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
+<button onclick="login()">Login</button>
 
-  <div id="log"></div>
+<div id="status">❌ No connectat</div>
 
-  <script>
-    const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNDRhODY1ZS1kYTY2LTRlODgtYjMyNC1kYWM4MjNkMDdhNmMiLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sIjoiYWRtaW5pc3RyYWRvciIsImlhdCI6MTc3Njc2NzMzNywiZXhwIjoxNzc2ODUzNzM3fQ.r9EVpZG2zTNwhxmfW-VhluDJK5wLzy-zQrd4hBCJ8Rs';
+<hr>
 
-    let cuaMissatges = [];
-    let connectat = false;
+<h2>Accions</h2>
+<button onclick="actualitzarGPS()">📍 Actualitzar GPS</button>
+<button onclick="canviarEstat()">🚔 Canviar Estat</button>
+<button onclick="enviarMissatge()">💬 Enviar Missatge</button>
 
-    const socket = io('http://localhost:3000', {
-      auth: { token: TOKEN },
+<div id="log"></div>
 
-      // ✅ Opcions de reconnexió
+<script>
+  const BASE_URL = "http://localhost:3000";
+  let socket = null;
+  let token = null;
+  let connectat = false;
+  let cuaMissatges = [];
+
+  function log(msg) {
+    const div = document.getElementById("log");
+    div.innerHTML = `<div>${new Date().toLocaleTimeString()} - ${msg}</div>` + div.innerHTML;
+  }
+
+  async function login() {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    try {
+      const response = await fetch(`${BASE_URL}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await response.json();
+
+      if (!data.exit) {
+        log("❌ Error login");
+        return;
+      }
+
+      token = data.token;
+      log("✅ Login correcte");
+
+      connectWebSocket();
+
+    } catch (error) {
+      log("❌ Error login: " + error.message);
+    }
+  }
+
+  function connectWebSocket() {
+    socket = io(BASE_URL, {
+      auth: { token },
       reconnection: true,
-      reconnectionAttempts: 10,      // Intentar 10 cops
-      reconnectionDelay: 1000,       // 1 segon entre intents
-      reconnectionDelayMax: 5000,    // màxim 5 segons
-      timeout: 20000,                // 20s abans de considerar fallida
-      transports: ['websocket']      // Forçar websocket
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      transports: ["websocket"]
     });
 
-    const addLog = (message) => {
-      const div = document.getElementById('log');
-      const entry = document.createElement('div');
-      entry.className = 'log-entry';
-      entry.innerHTML = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${message}`;
-      div.insertBefore(entry, div.firstChild);
-    };
-
-    socket.on('connect', () => {
+    socket.on("connect", () => {
       connectat = true;
-      document.getElementById('status').innerHTML = '✅ Connectat: ' + socket.id;
-      addLog('✅ Connectat al servidor WebSocket');
+      document.getElementById("status").innerHTML = "✅ Connectat";
+      document.getElementById("status").className = "ok";
+      log("✅ WebSocket connectat");
 
-      // ✅ Reenviar cua pendent
       if (cuaMissatges.length > 0) {
-        addLog(`📤 Reenviant ${cuaMissatges.length} missatges pendents...`);
+        log("📤 Reenviant missatges pendents...");
         cuaMissatges.forEach(({ event, data }) => {
-          enviarEvent(event, data);
+          socket.emit(event, data);
         });
         cuaMissatges = [];
       }
     });
 
-    socket.on('connexio_exitosa', (data) => {
-      addLog(`Benvingut ${data.usuari.username} (${data.usuari.rol})`);
-    });
-
-    // Escoltar respostes del servidor
-    socket.on('ubicacio_actualitzada', (data) => {
-      addLog(`✅ GPS actualitzat: ${JSON.stringify(data.dades)}`);
-    });
-
-    socket.on('estat_canviat', (data) => {
-      addLog(`✅ Estat canviat: ${data.missatge}`);
-    });
-
-    socket.on('missatge_enviat', (data) => {
-      addLog(`✅ Missatge enviat: ${data.dades.contingut}`);
-    });
-
-    socket.on('assignacio_acceptada_confirmacio', (data) => {
-      addLog(`✅ Assignació acceptada`);
-    });
-
-    socket.on('assignacio_rebutjada_confirmacio', (data) => {
-      addLog(`❌ Assignació rebutjada`);
-    });
-
-    socket.on('nova_incidencia', (data) => {
-      addLog('🆕 NOVA INCIDÈNCIA rebuda!');
-      console.log(data);
-    });
-
-    socket.on('reconnect_attempt', (attempt) => {
-      addLog(`🔄 Intentant reconnexió... Intent #${attempt}`);
-    });
-
-    socket.on('reconnect', (attempt) => {
-      addLog(`✅ Reconnectat correctament després de ${attempt} intents`);
-    });
-
-    socket.on('reconnect_error', (error) => {
-      addLog(`❌ Error en reconnexió: ${error.message}`);
-    });
-
-    socket.on('connect_error', (error) => {
-      addLog(`⚠️ Error de connexió: ${error.message}`);
-    });
-
-    socket.on('disconnect', (reason) => {
+    socket.on("disconnect", (reason) => {
       connectat = false;
-      document.getElementById('status').innerHTML = '❌ Desconnectat';
-      addLog(`❌ Desconnectat: ${reason}`);
+      document.getElementById("status").innerHTML = "❌ Desconnectat";
+      document.getElementById("status").className = "error";
+      log("❌ Desconnectat: " + reason);
     });
 
-    socket.on('error', (data) => {
-      addLog(`❌ ERROR: ${data.missatge} (${data.codi})`);
+    socket.on("reconnect", () => {
+      log("✅ Reconnectat correctament");
     });
 
-    socket.on('disconnect', () => {
-      document.getElementById('status').innerHTML = '❌ Desconnectat';
-      addLog('❌ Desconnexió del servidor');
+    socket.on("nou_missatge", (data) => {
+      log("💬 Missatge rebut: " + data.missatge?.contingut);
     });
 
-    // ==============================================================
-    // FUNCIONS PER ENVIAR EVENTS
-    // ==============================================================
+    socket.on("nova_incidencia", () => {
+      log("🚨 Nova incidència rebuda");
+    });
 
-    function enviarEvent(event, data) {
-      if (connectat) {
-        enviarEvent(event, data);
-      } else {
-        addLog(`📦 Guardant event en cua: ${event}`);
-        cuaMissatges.push({ event, data });
-      }
+    socket.on("ubicacio_indicatiu", () => {
+      log("📍 GPS actualitzat");
+    });
+  }
+
+  function enviarEvent(event, data) {
+    if (connectat) {
+      socket.emit(event, data);
+    } else {
+      log("📦 Guardant event en cua");
+      cuaMissatges.push({ event, data });
     }
+  }
 
-    function actualitzarGPS() {
-      // Coordenades de prova (Badalona)
-      const data = {
-        indicatiu_id: '77dad933-b69a-47cb-a287-3e7d81397f7d', // ⚠️ Canvia això
-        ubicacio_lat: 41.4534 + (Math.random() - 0.5) * 0.01, // Moure aleatòriament
-        ubicacio_lon: 2.2316 + (Math.random() - 0.5) * 0.01,
-      };
-      enviarEvent('actualitzar_ubicacio', data);
-      addLog(`📤 Enviant actualitzar_ubicacio: ${data.ubicacio_lat}, ${data.ubicacio_lon}`);
-    }
+  function actualitzarGPS() {
+    const indicatiuId = prompt("ID Indicatiu:");
+    enviarEvent("actualitzar_ubicacio", {
+      indicatiu_id: indicatiuId,
+      ubicacio_lat: 41.45 + Math.random() * 0.01,
+      ubicacio_lon: 2.23 + Math.random() * 0.01
+    });
+  }
 
-    function canviarEstat() {
-      const data = {
-        indicatiu_id: '77dad933-b69a-47cb-a287-3e7d81397f7d', // ⚠️ Canvia això
-        estat_operatiu: 'en_servei',
-      };
-      enviarEvent('canviar_estat_operatiu', data);
-      addLog(`📤 Enviant canviar_estat_operatiu: ${data.estat_operatiu}`);
-    }
+  function canviarEstat() {
+    const indicatiuId = prompt("ID Indicatiu:");
+    enviarEvent("canviar_estat_operatiu", {
+      indicatiu_id: indicatiuId,
+      estat_operatiu: "en_servei"
+    });
+  }
 
-    function enviarMissatge() {
-      const data = {
-        incidencia_id: null, // Pot ser null per missatges generals
-        contingut: 'Missatge de prova des del client WebSocket',
-        destinatari_id: null,
-      };
-      enviarEvent('enviar_missatge', data);
-      addLog(`📤 Enviant missatge: "${data.contingut}"`);
-    }
+  function enviarMissatge() {
+    const incidenciaId = prompt("ID Incidència:");
+    const contingut = prompt("Contingut:");
+    enviarEvent("enviar_missatge", {
+      incidencia_id: incidenciaId,
+      contingut
+    });
+  }
+</script>
 
-    function acceptarAssignacio() {
-      const assignacio_id = prompt('Introdueix l\'ID de l\'assignació:');
-      if (!assignacio_id) return;
-
-      enviarEvent('aceptar_assignacio', { assignacio_id });
-      addLog(`📤 Enviant aceptar_assignacio: ${assignacio_id}`);
-    }
-
-    function rebutjarAssignacio() {
-      const assignacio_id = prompt('Introdueix l\'ID de l\'assignació:');
-      if (!assignacio_id) return;
-
-      const motiu = prompt('Motiu del rebuig (opcional):');
-      enviarEvent('rebutjar_assignacio', { assignacio_id, motiu });
-      addLog(`📤 Enviant rebutjar_assignacio: ${assignacio_id}`);
-    }
-  </script>
 </body>
 </html>
