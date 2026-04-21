@@ -15,3 +15,4 @@ Retorna historial de la incidència
 
 ### PATCH /api/missatges/:id/llegit
 Marca missatge com a llegit
+
