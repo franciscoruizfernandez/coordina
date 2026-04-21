@@ -1,7 +1,7 @@
+import { Outlet } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { Outlet } from "react-router-dom";
 
 function Layout() {
   const { dispatch, usuari } = useContext(AuthContext);
@@ -16,25 +16,31 @@ function Layout() {
 
   return (
     <div className="h-screen flex flex-col">
-      <header className="bg-gray-800 text-white p-4 flex justify-between">
-        <h1>COORDINA - Sala de Control</h1>
+      {/* ✅ Navbar superior */}
+      <header className="bg-gray-800 text-white p-4 flex justify-between items-center">
+        <h1 className="text-lg font-semibold">COORDINA - Sala de Control</h1>
+
         {usuari && (
-          <div>
-            {usuari.username} ({usuari.rol})
+          <div className="flex items-center gap-4">
+            <span>
+              {usuari.username} ({usuari.rol})
+            </span>
             <button
               onClick={handleLogout}
-              className="ml-4 bg-red-600 px-2 py-1 rounded"
+              className="bg-red-600 px-3 py-1 rounded hover:bg-red-700"
             >
               Logout
             </button>
           </div>
         )}
       </header>
-      <main className="flex-1 bg-gray-100">
+
+      {/* ✅ Contingut principal (aquí anirà el mapa) */}
+      <main className="flex-1">
         <Outlet />
       </main>
     </div>
   );
 }
 
-export default Layout
+export default Layout;
