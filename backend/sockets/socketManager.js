@@ -2,6 +2,13 @@
 
 import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
+import {
+  handleActualitzarUbicacio,
+  handleCanviarEstatOperatiu,
+  handleEnviarMissatge,
+  handleAcceptarAssignacio,
+  handleRebutjarAssignacio,
+} from './receptors.js';
 
 // ==============================================================
 // MAPA DE CLIENTS CONNECTATS
@@ -71,8 +78,8 @@ export const inicialitzarSocketIO = (httpServer) => {
       methods: ['GET', 'POST'],
     },
     // Opcions de reconnexió
-    pingTimeout: 60000, // 60s abans de considerar desconnectat
-    pingInterval: 25000, // Envia ping cada 25s
+    pingTimeout: 10000, // 60s abans de considerar desconnectat
+    pingInterval: 5000, // Envia ping cada 25s
   });
 
   // Aplicar middleware d'autenticació
@@ -116,6 +123,13 @@ export const inicialitzarSocketIO = (httpServer) => {
       rol,
       timestamp: new Date().toISOString(),
     });
+
+    // REGISTRAR TOTS ELS RECEPTORS D'EVENTS
+    handleActualitzarUbicacio(socket);
+    handleCanviarEstatOperatiu(socket);
+    handleEnviarMissatge(socket);
+    handleAcceptarAssignacio(socket);
+    handleRebutjarAssignacio(socket);
 
     // ==============================================================
     // EVENT: DISCONNECT

@@ -1,79 +1,194 @@
-<!-- backend/test-websocket.html -->
 <!DOCTYPE html>
 <html lang="ca">
 <head>
   <meta charset="UTF-8">
-  <title>Test Events WebSocket</title>
+  <title>Test Events Clients → Servidor</title>
   <script src="https://cdn.socket.io/4.8.0/socket.io.min.js"></script>
   <style>
-    body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #ddd; }
-    #messages { margin-top: 20px; }
-    .event { padding: 10px; margin: 5px 0; border-left: 3px solid #4CAF50; background: #2d2d2d; }
-    .event.nova { border-color: #2196F3; }
-    .event.assignada { border-color: #FF9800; }
-    .event.gps { border-color: #9C27B0; }
+    body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
+    button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    .success { background: #4CAF50; color: white; border: none; }
+    .warning { background: #FF9800; color: white; border: none; }
+    .danger { background: #f44336; color: white; border: none; }
+    #log { margin-top: 20px; background: white; padding: 15px; border: 1px solid #ddd; max-height: 400px; overflow-y: auto; }
+    .log-entry { padding: 8px; margin: 3px 0; border-left: 3px solid #2196F3; background: #f9f9f9; }
   </style>
 </head>
 <body>
-  <h1>🔌 Listener d'Events WebSocket</h1>
+  <h1>🧪 Test Events WebSocket (Client → Servidor)</h1>
   <div id="status">❌ Desconnectat</div>
-  <div id="messages"></div>
+
+  <h2>Accions disponibles:</h2>
+
+  <button class="success" onclick="actualitzarGPS()">📍 Actualitzar GPS</button>
+  <button class="warning" onclick="canviarEstat()">🚔 Canviar Estat (en_servei)</button>
+  <button onclick="enviarMissatge()">💬 Enviar Missatge</button>
+  <button class="success" onclick="acceptarAssignacio()">✅ Acceptar Assignació</button>
+  <button class="danger" onclick="rebutjarAssignacio()">❌ Rebutjar Assignació</button>
+
+  <div id="log"></div>
 
   <script>
-    const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNDRhODY1ZS1kYTY2LTRlODgtYjMyNC1kYWM4MjNkMDdhNmMiLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sIjoiYWRtaW5pc3RyYWRvciIsImlhdCI6MTc3NjY4MDIzOCwiZXhwIjoxNzc2NzY2NjM4fQ.jP4Q-vQOjTIXQ9j8196q8fwD8lQWsQ3IjHgwJLERlcU'; 
+    const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxNDRhODY1ZS1kYTY2LTRlODgtYjMyNC1kYWM4MjNkMDdhNmMiLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sIjoiYWRtaW5pc3RyYWRvciIsImlhdCI6MTc3Njc2NzMzNywiZXhwIjoxNzc2ODUzNzM3fQ.r9EVpZG2zTNwhxmfW-VhluDJK5wLzy-zQrd4hBCJ8Rs';
+
+    let cuaMissatges = [];
+    let connectat = false;
 
     const socket = io('http://localhost:3000', {
-      auth: { token: TOKEN }
+      auth: { token: TOKEN },
+
+      // ✅ Opcions de reconnexió
+      reconnection: true,
+      reconnectionAttempts: 10,      // Intentar 10 cops
+      reconnectionDelay: 1000,       // 1 segon entre intents
+      reconnectionDelayMax: 5000,    // màxim 5 segons
+      timeout: 20000,                // 20s abans de considerar fallida
+      transports: ['websocket']      // Forçar websocket
     });
 
-    socket.on('connect_error', (err) => {
-      console.log('ERROR REAL:', err.message, err);
-    });
-
-    const addMessage = (type, title, data) => {
-      const div = document.getElementById('messages');
-      const el = document.createElement('div');
-      el.className = `event ${type}`;
-      el.innerHTML = `<strong>${title}</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
-      div.insertBefore(el, div.firstChild);
+    const addLog = (message) => {
+      const div = document.getElementById('log');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.innerHTML = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${message}`;
+      div.insertBefore(entry, div.firstChild);
     };
 
     socket.on('connect', () => {
+      connectat = true;
       document.getElementById('status').innerHTML = '✅ Connectat: ' + socket.id;
+      addLog('✅ Connectat al servidor WebSocket');
+
+      // ✅ Reenviar cua pendent
+      if (cuaMissatges.length > 0) {
+        addLog(`📤 Reenviant ${cuaMissatges.length} missatges pendents...`);
+        cuaMissatges.forEach(({ event, data }) => {
+          enviarEvent(event, data);
+        });
+        cuaMissatges = [];
+      }
     });
 
     socket.on('connexio_exitosa', (data) => {
-      addMessage('', '✅ Connexió exitosa', data);
+      addLog(`Benvingut ${data.usuari.username} (${data.usuari.rol})`);
     });
 
-    // Events que escoltem
+    // Escoltar respostes del servidor
+    socket.on('ubicacio_actualitzada', (data) => {
+      addLog(`✅ GPS actualitzat: ${JSON.stringify(data.dades)}`);
+    });
+
+    socket.on('estat_canviat', (data) => {
+      addLog(`✅ Estat canviat: ${data.missatge}`);
+    });
+
+    socket.on('missatge_enviat', (data) => {
+      addLog(`✅ Missatge enviat: ${data.dades.contingut}`);
+    });
+
+    socket.on('assignacio_acceptada_confirmacio', (data) => {
+      addLog(`✅ Assignació acceptada`);
+    });
+
+    socket.on('assignacio_rebutjada_confirmacio', (data) => {
+      addLog(`❌ Assignació rebutjada`);
+    });
+
     socket.on('nova_incidencia', (data) => {
-      addMessage('nova', '🆕 NOVA INCIDÈNCIA', data);
+      addLog('🆕 NOVA INCIDÈNCIA rebuda!');
+      console.log(data);
     });
 
-    socket.on('incidencia_actualitzada', (data) => {
-      addMessage('', '📝 Incidència actualitzada', data);
+    socket.on('reconnect_attempt', (attempt) => {
+      addLog(`🔄 Intentant reconnexió... Intent #${attempt}`);
     });
 
-    socket.on('incidencia_assignada', (data) => {
-      addMessage('assignada', '🚨 INCIDÈNCIA ASSIGNADA', data);
+    socket.on('reconnect', (attempt) => {
+      addLog(`✅ Reconnectat correctament després de ${attempt} intents`);
     });
 
-    socket.on('canvi_estat_incidencia', (data) => {
-      addMessage('', "🔄 Canvi d'estat", data);
+    socket.on('reconnect_error', (error) => {
+      addLog(`❌ Error en reconnexió: ${error.message}`);
     });
 
-    socket.on('ubicacio_indicatiu', (data) => {
-      addMessage('gps', '📍 GPS Actualitzat', data);
+    socket.on('connect_error', (error) => {
+      addLog(`⚠️ Error de connexió: ${error.message}`);
     });
 
-    socket.on('canvi_estat_indicatiu', (data) => {
-      addMessage('', '🚔 Canvi estat indicatiu', data);
+    socket.on('disconnect', (reason) => {
+      connectat = false;
+      document.getElementById('status').innerHTML = '❌ Desconnectat';
+      addLog(`❌ Desconnectat: ${reason}`);
+    });
+
+    socket.on('error', (data) => {
+      addLog(`❌ ERROR: ${data.missatge} (${data.codi})`);
     });
 
     socket.on('disconnect', () => {
       document.getElementById('status').innerHTML = '❌ Desconnectat';
+      addLog('❌ Desconnexió del servidor');
     });
+
+    // ==============================================================
+    // FUNCIONS PER ENVIAR EVENTS
+    // ==============================================================
+
+    function enviarEvent(event, data) {
+      if (connectat) {
+        enviarEvent(event, data);
+      } else {
+        addLog(`📦 Guardant event en cua: ${event}`);
+        cuaMissatges.push({ event, data });
+      }
+    }
+
+    function actualitzarGPS() {
+      // Coordenades de prova (Badalona)
+      const data = {
+        indicatiu_id: '77dad933-b69a-47cb-a287-3e7d81397f7d', // ⚠️ Canvia això
+        ubicacio_lat: 41.4534 + (Math.random() - 0.5) * 0.01, // Moure aleatòriament
+        ubicacio_lon: 2.2316 + (Math.random() - 0.5) * 0.01,
+      };
+      enviarEvent('actualitzar_ubicacio', data);
+      addLog(`📤 Enviant actualitzar_ubicacio: ${data.ubicacio_lat}, ${data.ubicacio_lon}`);
+    }
+
+    function canviarEstat() {
+      const data = {
+        indicatiu_id: '77dad933-b69a-47cb-a287-3e7d81397f7d', // ⚠️ Canvia això
+        estat_operatiu: 'en_servei',
+      };
+      enviarEvent('canviar_estat_operatiu', data);
+      addLog(`📤 Enviant canviar_estat_operatiu: ${data.estat_operatiu}`);
+    }
+
+    function enviarMissatge() {
+      const data = {
+        incidencia_id: null, // Pot ser null per missatges generals
+        contingut: 'Missatge de prova des del client WebSocket',
+        destinatari_id: null,
+      };
+      enviarEvent('enviar_missatge', data);
+      addLog(`📤 Enviant missatge: "${data.contingut}"`);
+    }
+
+    function acceptarAssignacio() {
+      const assignacio_id = prompt('Introdueix l\'ID de l\'assignació:');
+      if (!assignacio_id) return;
+
+      enviarEvent('aceptar_assignacio', { assignacio_id });
+      addLog(`📤 Enviant aceptar_assignacio: ${assignacio_id}`);
+    }
+
+    function rebutjarAssignacio() {
+      const assignacio_id = prompt('Introdueix l\'ID de l\'assignació:');
+      if (!assignacio_id) return;
+
+      const motiu = prompt('Motiu del rebuig (opcional):');
+      enviarEvent('rebutjar_assignacio', { assignacio_id, motiu });
+      addLog(`📤 Enviant rebutjar_assignacio: ${assignacio_id}`);
+    }
   </script>
 </body>
 </html>
