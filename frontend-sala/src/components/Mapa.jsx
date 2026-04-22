@@ -1,8 +1,8 @@
-import { memo } from "react";
-import { MapContainer, TileLayer, ScaleControl, ZoomControl } from "react-leaflet";
+import { MapContainer, TileLayer, ZoomControl, ScaleControl } from "react-leaflet";
+import MarcadorIncidencia from "./MarcadorIncidencia";
 import "leaflet/dist/leaflet.css";
 
-function Mapa() {
+function Mapa({ incidencies = [], onSeleccionarIncidencia }) {
   const centre = [41.60, 2.30];
   const zoomInicial = 11;
 
@@ -13,7 +13,6 @@ function Mapa() {
       style={{ height: "calc(100vh - 64px)", width: "100%" }}
       zoomControl={false}
       scrollWheelZoom={true}
-      doubleClickZoom={true}
     >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -24,10 +23,18 @@ function Mapa() {
 
       <ZoomControl position="topright" />
       <ScaleControl position="bottomleft" imperial={false} />
+
+      {/* ✅ Renderitzar marcadors d'incidències */}
+      {incidencies.map((incidencia) => (
+        <MarcadorIncidencia
+          key={incidencia.id}
+          incidencia={incidencia}
+          onSeleccionar={onSeleccionarIncidencia}
+        />
+      ))}
     </MapContainer>
   );
 }
 
-// ✅ Optimització: No re-renderitzar si no canvien els props
-export default memo(Mapa);
+export default Mapa;
 /*calc(100vh - 64px)*/
