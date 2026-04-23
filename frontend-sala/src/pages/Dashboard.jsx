@@ -1,17 +1,19 @@
-import { useState, useEffect, useContext } from "react";
-import Mapa from "../components/Mapa";
-import { getIncidencies, getIndicatius } from "../services/api";
-import { SocketContext } from "../context/SocketContext";
-import LlistaIncidencies from "../components/LlistaIncidencies";
+// src/pages/Dashboard.jsx
+import { useState, useEffect, useContext } from 'react';
+import Mapa from '../components/Mapa';
+import { getIncidencies, getIndicatius } from '../services/api';
+import { SocketContext } from '../context/SocketContext';
+import LlistaIncidencies from '../components/LlistaIncidencies';
+import DetallIncidencia from '../components/DetallIncidencia'; // 🆕
 
 function Dashboard() {
   const { socket } = useContext(SocketContext);
 
-  const [incidencies, setIncidencies] = useState([]);
-  const [indicatius, setIndicatius] = useState([]);
+  const [incidencies, setIncidencies]                   = useState([]);
+  const [indicatius, setIndicatius]                     = useState([]);
   const [incidenciaSeleccionada, setIncidenciaSeleccionada] = useState(null);
-  const [carregant, setCarregant] = useState(true);
-  const [error, setError] = useState(null);
+  const [carregant, setCarregant]                       = useState(true);
+  const [error, setError]                               = useState(null);
 
   // ===============================
   // CÀRREGA INICIAL DE DADES
@@ -22,25 +24,18 @@ function Dashboard() {
         setCarregant(true);
         setError(null);
 
-        console.log("📡 Carregant incidències...");
         const dataInc = await getIncidencies();
-        console.log("✅ Incidències carregades:", dataInc);
-
-        console.log("📡 Carregant indicatius...");
         const dataInd = await getIndicatius();
-        console.log("✅ Indicatius carregats:", dataInd);
 
-        // Ajust segons estructura real del backend
         setIncidencies(dataInc.incidencies || dataInc.dades || []);
         setIndicatius(dataInd.dades || dataInd.indicatius || []);
       } catch (err) {
-        console.error("❌ Error carregant dades:", err);
-        setError("No s'han pogut carregar les dades");
+        console.error('❌ Error carregant dades:', err);
+        setError('No s\'han pogut carregar les dades');
       } finally {
         setCarregant(false);
       }
     }
-
     carregar();
   }, []);
 
@@ -50,24 +45,19 @@ function Dashboard() {
   useEffect(() => {
     if (!socket) return;
 
-    console.log("👂 Escoltant events WebSocket...");
-
-    socket.on("nova_incidencia", (data) => {
-      console.log("🚨 Nova incidència:", data);
+    socket.on('nova_incidencia', (data) => {
       setIncidencies((prev) => [...prev, data.incidencia]);
     });
 
-    socket.on("ubicacio_indicatiu", (data) => {
+    socket.on('ubicacio_indicatiu', (data) => {
       setIndicatius((prev) =>
         prev.map((ind) =>
-          ind.id === data.indicatiu.id
-            ? { ...ind, ...data.indicatiu }
-            : ind
+          ind.id === data.indicatiu.id ? { ...ind, ...data.indicatiu } : ind
         )
       );
     });
 
-    socket.on("canvi_estat_incidencia", (data) => {
+    socket.on('canvi_estat_incidencia', (data) => {
       setIncidencies((prev) =>
         prev.map((inc) =>
           inc.id === data.incidencia_id
@@ -75,9 +65,15 @@ function Dashboard() {
             : inc
         )
       );
+      // Actualitzar també la seleccionada si és la mateixa
+      setIncidenciaSeleccionada((prev) =>
+        prev?.id === data.incidencia_id
+          ? { ...prev, estat: data.estat_nou }
+          : prev
+      );
     });
 
-    socket.on("canvi_estat_indicatiu", (data) => {
+    socket.on('canvi_estat_indicatiu', (data) => {
       setIndicatius((prev) =>
         prev.map((ind) =>
           ind.id === data.indicatiu_id
@@ -88,12 +84,25 @@ function Dashboard() {
     });
 
     return () => {
-      socket.off("nova_incidencia");
-      socket.off("ubicacio_indicatiu");
-      socket.off("canvi_estat_incidencia");
-      socket.off("canvi_estat_indicatiu");
+      socket.off('nova_incidencia');
+      socket.off('ubicacio_indicatiu');
+      socket.off('canvi_estat_incidencia');
+      socket.off('canvi_estat_indicatiu');
     };
   }, [socket]);
+
+  // ===============================
+  // 🆕 CALLBACK: Sincronitzar estat local quan DetallIncidencia fa una acció
+  // ===============================
+  const handleIncidenciaActualitzada = (id, canvis) => {
+    setIncidencies((prev) =>
+      prev.map((inc) => (inc.id === id ? { ...inc, ...canvis } : inc))
+    );
+    // Actualitzar l'objecte seleccionat perquè DetallIncidencia es re-renderitzi
+    setIncidenciaSeleccionada((prev) =>
+      prev?.id === id ? { ...prev, ...canvis } : prev
+    );
+  };
 
   // ===============================
   // ESTATS DE CÀRREGA
@@ -115,59 +124,39 @@ function Dashboard() {
   }
 
   // ===============================
-  // RENDER PRINCIPAL
+  // RENDER PRINCIPAL — Layout de 3 panells
   // ===============================
-    return (
-    // ✅ CONTENIDOR PRINCIPAL: Alçada fixa de pantalla, sense scroll global
+  return (
     <div className="flex h-screen overflow-hidden">
-      
-      {/* ✅ PANELL ESQUERRE: Alçada completa, scroll intern */}
-      <div className="w-80 bg-white border-r border-gray-200 h-full overflow-y-auto">
+
+      {/* ── PANELL ESQUERRE: Llista d'incidències ── */}
+      <div className="w-80 bg-white border-r border-gray-200 h-full overflow-y-auto flex-shrink-0">
         <LlistaIncidencies
           incidencies={incidencies}
           onSeleccionar={setIncidenciaSeleccionada}
         />
       </div>
 
-      {/* ✅ MAPA: Ocupa la resta de l'espai, alçada completa */}
+      {/* ── PANELL CENTRAL: Mapa ── */}
       <div className="flex-1 h-full relative">
         <Mapa
           incidencies={incidencies}
           indicatius={indicatius}
           onSeleccionarIncidencia={setIncidenciaSeleccionada}
         />
-
-        {/* ✅ Detall flotant (es queda igual) */}
-        {incidenciaSeleccionada && (
-          <div
-            style={{
-              position: "fixed",
-              top: "80px",
-              right: "20px",
-              backgroundColor: "white",
-              padding: "16px",
-              borderRadius: "8px",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-              zIndex: 1000,
-              maxWidth: "300px",
-            }}
-          >
-            <h3 className="font-semibold mb-2">
-              Incidència seleccionada:
-            </h3>
-            <p className="text-sm">{incidenciaSeleccionada.tipologia}</p>
-            <p className="text-xs text-gray-600">
-              {incidenciaSeleccionada.direccio}
-            </p>
-            <button
-              onClick={() => setIncidenciaSeleccionada(null)}
-              className="mt-2 text-xs bg-red-500 text-white px-3 py-1 rounded"
-            >
-              Tancar
-            </button>
-          </div>
-        )}
       </div>
+
+      {/* ── PANELL DRET: Detall incidència (apareix quan hi ha selecció) ── */}
+      {incidenciaSeleccionada && (
+        <div className="w-80 bg-white border-l border-gray-200 h-full overflow-hidden flex-shrink-0">
+          <DetallIncidencia
+            incidencia={incidenciaSeleccionada}
+            onTancar={() => setIncidenciaSeleccionada(null)}
+            onIncidenciaActualitzada={handleIncidenciaActualitzada}
+          />
+        </div>
+      )}
+
     </div>
   );
 }

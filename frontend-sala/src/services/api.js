@@ -106,4 +106,19 @@ export const getMissatges = async (incidencia_id) => {
   return response.data;
 };
 
+// ================= HISTORIAL =================
+
+export const getHistorialIncidencia = async (id) => {
+  const response = await api.get(`/incidencies/${id}/historial`);
+  return response.data;
+};
+
+// ================= ASSIGNACIÓ: OBTENIR PER INCIDÈNCIA =================
+
+export const getAssignacioActiva = async (incidencia_id) => {
+  // Obtenim detall complet de la incidència que ja inclou l'assignació
+  const response = await api.get(`/incidencies/${incidencia_id}`);
+  return response.data;
+};
+
 export default api;
