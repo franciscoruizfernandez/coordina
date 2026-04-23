@@ -1,8 +1,18 @@
-import { MapContainer, TileLayer, ZoomControl, ScaleControl } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  ZoomControl,
+  ScaleControl,
+} from "react-leaflet";
 import MarcadorIncidencia from "./MarcadorIncidencia";
+import MarcadorIndicatiu from "./MarcadorIndicatiu"; // ✅ Nou
 import "leaflet/dist/leaflet.css";
 
-function Mapa({ incidencies = [], onSeleccionarIncidencia }) {
+function Mapa({
+  incidencies = [],
+  indicatius = [], // ✅ Nou
+  onSeleccionarIncidencia,
+}) {
   const centre = [41.60, 2.30];
   const zoomInicial = 11;
 
@@ -16,7 +26,7 @@ function Mapa({ incidencies = [], onSeleccionarIncidencia }) {
     >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        attribution='&copy; OpenStreetMap'
         maxZoom={18}
         minZoom={11}
       />
@@ -24,7 +34,7 @@ function Mapa({ incidencies = [], onSeleccionarIncidencia }) {
       <ZoomControl position="topright" />
       <ScaleControl position="bottomleft" imperial={false} />
 
-      {/* ✅ Renderitzar marcadors d'incidències */}
+      {/* ✅ Incidències */}
       {incidencies.map((incidencia) => (
         <MarcadorIncidencia
           key={incidencia.id}
@@ -32,9 +42,16 @@ function Mapa({ incidencies = [], onSeleccionarIncidencia }) {
           onSeleccionar={onSeleccionarIncidencia}
         />
       ))}
+
+      {/* ✅ Indicatius */}
+      {indicatius.map((indicatiu) => (
+        <MarcadorIndicatiu
+          key={indicatiu.id}
+          indicatiu={indicatiu}
+        />
+      ))}
     </MapContainer>
   );
 }
 
 export default Mapa;
-/*calc(100vh - 64px)*/
