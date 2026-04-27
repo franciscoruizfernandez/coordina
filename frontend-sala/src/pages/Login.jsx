@@ -24,7 +24,7 @@ function Login() {
 
     try {
       const response = await api.post(
-        `${API_URL}/auth/login`,
+        "/auth/login",
         { username, password }
       );
 
