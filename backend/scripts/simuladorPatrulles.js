@@ -8,7 +8,7 @@ dotenv.config();
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 const TOKEN = process.env.TOKEN_PATRULLA_SIMULADOR; // token admin o operador
 
-const INTERVAL = 10000; // 10 segons
+const INTERVAL = 4000; // 10 segons
 const RADI_MOVIMENT_METRES = 500;
 
 // ==============================================================
@@ -98,18 +98,35 @@ async function simularMoviment() {
         let novaPosicio;
 
         if (!indicatiu.incidencia_assignada_id) {
-            novaPosicio = movimentAleatori(latActual, lonActual);
+          novaPosicio = movimentAleatori(latActual, lonActual);
         } else {
-            const latObj = parseFloat(indicatiu.incidencia_lat);
-            const lonObj = parseFloat(indicatiu.incidencia_lon);
+          const latObj = parseFloat(indicatiu.incidencia_lat);
+          const lonObj = parseFloat(indicatiu.incidencia_lon);
 
-            novaPosicio = moureCapAObjectiu(latActual, lonActual, latObj, lonObj);
+          if (
+            isNaN(latObj) || isNaN(lonObj) ||
+            latObj < -90 || latObj > 90 ||
+            lonObj < -180 || lonObj > 180
+          ) {
+            console.log(`⚠️ Incidència invàlida per ${indicatiu.codi}`);
+            continue;
+          }
+
+          novaPosicio = moureCapAObjectiu(latActual, lonActual, latObj, lonObj);
         }
 
-        await actualitzarGPS(indicatiu.id, novaPosicio.lat, novaPosicio.lon);
+        try {
+          await actualitzarGPS(indicatiu.id, novaPosicio.lat, novaPosicio.lon);
 
-        console.log(`🚔 ${indicatiu.codi} → (${novaPosicio.lat}, ${novaPosicio.lon})`);
+          console.log(`🚔 ${indicatiu.codi} → (${novaPosicio.lat}, ${novaPosicio.lon})`);
+        } catch (err) {
+          console.error(`❌ Error en ${indicatiu.codi}:`, {
+            lat: novaPosicio.lat,
+            lon: novaPosicio.lon,
+            error: err.response?.data || err.message
+          });
         }
+      }
 
   } catch (error) {
     console.error('❌ Error simulant moviment:', error.response?.data || error.message);

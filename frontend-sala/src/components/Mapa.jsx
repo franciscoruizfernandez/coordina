@@ -14,7 +14,7 @@ function Mapa({
   onSeleccionarIncidencia,
 }) {
   const centre = [41.60, 2.30];
-  const zoomInicial = 11;
+  const zoomInicial = 10;
 
   return (
     <MapContainer
@@ -28,7 +28,7 @@ function Mapa({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; OpenStreetMap'
         maxZoom={18}
-        minZoom={11}
+        minZoom={10}
       />
 
       <ZoomControl position="topright" />

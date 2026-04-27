@@ -2,6 +2,7 @@
 // Modal per seleccionar manualment un indicatiu disponible i assignar-lo a una incidència
 
 import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import { getIndicatiusDisponibles, assignacioManual } from '../services/api';
 import { calcularDistancia } from '../utils/haversine';
 
@@ -37,7 +38,8 @@ function ModalAssignacioManual({ incidencia, onTancar, onAssignat }) {
   const [indicatius, setIndicatius]   = useState([]);
   const [carregant, setCarregant]     = useState(true);
   const [assignant, setAssignant]     = useState(false); // ID de l'indicatiu en procés
-  const [error, setError]             = useState(null);
+
+  //  Eliminat estat "error" local → ara usem toast.error directament
 
   // ---------------------------------------------------
   // Carregar indicatius disponibles en obrir el modal
@@ -46,7 +48,6 @@ function ModalAssignacioManual({ incidencia, onTancar, onAssignat }) {
     const carregar = async () => {
         try {
         setCarregant(true);
-        setError(null);
         const resposta = await getIndicatiusDisponibles();
         const llista = resposta.dades || resposta.indicatius || [];
 
@@ -81,7 +82,9 @@ function ModalAssignacioManual({ incidencia, onTancar, onAssignat }) {
         setIndicatius(llistaAmbDistancia);
         } catch (err) {
         console.error('❌ Error carregant indicatius disponibles:', err);
-        setError("No s'han pogut carregar els indicatius disponibles");
+        //  Toast d'error en lloc de banner inline
+        toast.error("No s'han pogut carregar els indicatius disponibles");
+        onTancar(); // Tancar el modal si no podem carregar dades
         } finally {
         setCarregant(false);
         }
@@ -95,7 +98,6 @@ function ModalAssignacioManual({ incidencia, onTancar, onAssignat }) {
   const handleAssignar = async (indicatiu_id) => {
     try {
       setAssignant(indicatiu_id);
-      setError(null);
 
       await assignacioManual({
         incidencia_id: incidencia.id,
@@ -103,12 +105,14 @@ function ModalAssignacioManual({ incidencia, onTancar, onAssignat }) {
       });
 
       // Notificar al pare que s'ha fet l'assignació
+      // ✅ La confirmació d'èxit la gestiona el pare (DetallIncidencia)
       onAssignat();
     } catch (err) {
       console.error('❌ Error en assignació manual:', err);
-      const missatgeError =
-        err.response?.data?.missatge || 'Error en realitzar l\'assignació';
-      setError(missatgeError);
+      //  Toast d'error en assignació fallida
+      toast.error(
+        `⚠️ ${err.response?.data?.missatge || "Error en realitzar l'assignació"}`
+      );
     } finally {
       setAssignant(false);
     }
@@ -155,12 +159,7 @@ function ModalAssignacioManual({ incidencia, onTancar, onAssignat }) {
           </span>
         </div>
 
-        {/* ERROR GLOBAL */}
-        {error && (
-          <div className="mx-4 mt-3 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
-            ⚠️ {error}
-          </div>
-        )}
+        {/*  Eliminat el div d'error inline → ara va per toast */}
 
         {/* LLISTA D'INDICATIUS */}
         <div className="flex-1 overflow-y-auto p-4">
@@ -178,22 +177,7 @@ function ModalAssignacioManual({ incidencia, onTancar, onAssignat }) {
           ) : (
             <div className="space-y-3">
               {indicatius.map((ind) => {
-                // Calcular distància aproximada si tenim coordenades
-                let distancia = null;
-                if (
-                  ind.ubicacio_lat &&
-                  ind.ubicacio_lon &&
-                  incidencia.ubicacio_lat &&
-                  incidencia.ubicacio_lon
-                ) {
-                  distancia = calcularDistancia(
-                    parseFloat(incidencia.ubicacio_lat),
-                    parseFloat(incidencia.ubicacio_lon),
-                    parseFloat(ind.ubicacio_lat),
-                    parseFloat(ind.ubicacio_lon)
-                  );
-                }
-
+                const distancia = ind._distancia_km;
                 const estaAssignant = assignant === ind.id;
 
                 return (
@@ -220,7 +204,7 @@ function ModalAssignacioManual({ incidencia, onTancar, onAssignat }) {
                         )}
                         {distancia !== null && (
                           <div>
-                            📏 Distància aproximada:{' '}
+                            📏 Distància:{' '}
                             <span className="font-medium text-gray-700">
                               {distancia < 1
                                 ? `${Math.round(distancia * 1000)} m`

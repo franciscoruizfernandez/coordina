@@ -10,8 +10,8 @@ dotenv.config();
 // ==============================================================
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
-const INTERVAL_MIN = 2 * 60 * 1000;  // 2 minuts
-const INTERVAL_MAX = 5 * 60 * 1000;  // 5 minuts
+const INTERVAL_MIN = 10 * 1000;  // 10 segons
+const INTERVAL_MAX = 15 * 1000;  // 15 segons
 
 // Token del sistema (crea un usuari tipus "sistema_112")
 const TOKEN_112 = process.env.TOKEN_112;
@@ -98,6 +98,7 @@ async function enviarIncidencia() {
 
     console.log('✅ Incidència creada correctament:', response.data.dades.id);
   } catch (error) {
+    console.log('TOKEN_112:', TOKEN_112);
     console.error('❌ Error enviant incidència 112:', error.response?.data || error.message);
   }
 }

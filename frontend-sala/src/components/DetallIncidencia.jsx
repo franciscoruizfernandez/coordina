@@ -3,6 +3,7 @@
 // Mostra tota la informació d'una incidència seleccionada amb totes les accions possibles
 
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from 'react-toastify'; // ✅ US-037
 import {
   getIncidencia,
   getHistorialIncidencia,
@@ -155,11 +156,10 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
   const [error, setError]                     = useState(null);
 
   // Estat per a les accions
+  //  Eliminats missatgeExit i errorAccio → ara usem toast directament
   const [canviantEstat, setCanviantEstat]     = useState(false);
   const [assignantAuto, setAssignantAuto]     = useState(false);
   const [mostrarModalManual, setMostrarModalManual] = useState(false);
-  const [errorAccio, setErrorAccio]           = useState(null);
-  const [missatgeExit, setMissatgeExit]       = useState(null);
 
   // ------- Carregar dades detallades -------
   const carregarDetall = useCallback(async () => {
@@ -174,7 +174,7 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
       setDetall(resposta.dades || resposta);
     } catch (err) {
       console.error('❌ Error carregant detall:', err);
-      setError('No s\'ha pogut carregar el detall de la incidència');
+      setError("No s'ha pogut carregar el detall de la incidència");
     } finally {
       setCarregantDetall(false);
     }
@@ -202,27 +202,19 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
   useEffect(() => {
     setDetall(null);
     setHistorial([]);
-    setErrorAccio(null);
-    setMissatgeExit(null);
     carregarDetall();
     carregarHistorial();
   }, [incidencia?.id, carregarDetall, carregarHistorial]);
-
-  // ------- Missatge d'èxit temporal -------
-  const mostrarExit = (missatge) => {
-    setMissatgeExit(missatge);
-    setTimeout(() => setMissatgeExit(null), 4000);
-  };
 
   // ------- ACCIÓ: Canviar estat -------
   const handleCanviarEstat = async (nouEstat) => {
     try {
       setCanviantEstat(true);
-      setErrorAccio(null);
 
       await canviarEstatIncidencia(incidencia.id, nouEstat);
 
-      mostrarExit(`Estat canviat a "${ETIQUETA_ESTAT[nouEstat]}" correctament`);
+      //  Toast d'èxit en canvi d'estat
+      toast.success(`✅ Estat canviat a "${ETIQUETA_ESTAT[nouEstat]}" correctament`);
 
       // Actualitzar detall local
       await carregarDetall();
@@ -234,8 +226,10 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
       }
     } catch (err) {
       console.error('❌ Error canviant estat:', err);
-      const msg = err.response?.data?.missatge || 'Error en canviar l\'estat';
-      setErrorAccio(msg);
+      //  Toast d'error en canvi d'estat
+      toast.error(
+        `⚠️ ${err.response?.data?.missatge || "Error en canviar l'estat"}`
+      );
     } finally {
       setCanviantEstat(false);
     }
@@ -245,12 +239,12 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
   const handleAssignacioAutomatica = async () => {
     try {
       setAssignantAuto(true);
-      setErrorAccio(null);
 
       const resposta = await assignacioAutomatica(incidencia.id);
 
-      mostrarExit(
-        `Assignació automàtica realitzada: ${resposta.algorisme?.indicatiu_seleccionat || 'OK'}`
+      //  Toast d'èxit en assignació automàtica
+      toast.success(
+        `⚡ Assignació automàtica: patrulla ${resposta.algorisme?.indicatiu_seleccionat || 'assignada'} (${resposta.algorisme?.distancia_km || '?'} km)`
       );
 
       await carregarDetall();
@@ -261,8 +255,10 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
       }
     } catch (err) {
       console.error('❌ Error en assignació automàtica:', err);
-      const msg = err.response?.data?.missatge || 'Error en l\'assignació automàtica';
-      setErrorAccio(msg);
+      //  Toast d'error en assignació automàtica
+      toast.error(
+        `⚠️ ${err.response?.data?.missatge || "Error en l'assignació automàtica"}`
+      );
     } finally {
       setAssignantAuto(false);
     }
@@ -271,7 +267,8 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
   // ------- ACCIÓ: Assignació manual completada -------
   const handleAssignacioManualOk = async () => {
     setMostrarModalManual(false);
-    mostrarExit('Assignació manual realitzada correctament');
+    //  Toast d'èxit en assignació manual
+    toast.success('👮 Assignació manual realitzada correctament');
     await carregarDetall();
     await carregarHistorial();
 
@@ -337,25 +334,8 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
         {/* ══ SCROLL INTERN ══ */}
         <div className="flex-1 overflow-y-auto">
 
-          {/* Missatge d'èxit */}
-          {missatgeExit && (
-            <div className="mx-4 mt-3 p-3 bg-green-50 border border-green-200 rounded text-green-700 text-sm flex items-center gap-2">
-              <span>✅</span> {missatgeExit}
-            </div>
-          )}
-
-          {/* Missatge d'error d'acció */}
-          {errorAccio && (
-            <div className="mx-4 mt-3 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm flex items-center gap-2">
-              <span>⚠️</span> {errorAccio}
-              <button
-                onClick={() => setErrorAccio(null)}
-                className="ml-auto text-red-400 hover:text-red-600"
-              >
-                ×
-              </button>
-            </div>
-          )}
+          {/*  Eliminats banners manuals (missatgeExit i errorAccio) */}
+          {/* Ara tots els missatges van via toast global */}
 
           {/* Error de càrrega principal */}
           {error && (
@@ -429,7 +409,6 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
 
               <div className="space-y-2">
 
-                {/* Assignació automàtica — només si la incidència és "nova" */}
                 {estatActual === 'nova' && (
                   <button
                     onClick={handleAssignacioAutomatica}
@@ -451,7 +430,6 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
                   </button>
                 )}
 
-                {/* Assignació manual — només si és "nova" */}
                 {estatActual === 'nova' && (
                   <button
                     onClick={() => setMostrarModalManual(true)}
@@ -462,7 +440,6 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
                   </button>
                 )}
 
-                {/* Canvi d'estat — botons per les transicions permeses */}
                 {transicions.length > 0 && (
                   <div>
                     <p className="text-xs text-gray-400 mb-1.5">Canviar estat:</p>
