@@ -2,7 +2,7 @@ import { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { API_URL } from "../config.js";
+import api from "../services/api"
 
 function Login() {
   const { token, dispatch } = useContext(AuthContext);
@@ -23,7 +23,7 @@ function Login() {
     e.preventDefault();
 
     try {
-      const response = await axios.post(
+      const response = await api.post(
         `${API_URL}/auth/login`,
         { username, password }
       );

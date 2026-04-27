@@ -1,8 +1,7 @@
 import { io } from "socket.io-client";
-import { WS_URL } from "../config.js";
 
 // ✅ URL del backend WebSocket
-const SOCKET_URL = WS_URL;
+const SOCKET_URL = import.meta.env.VITE_WS_URL || "http://localhost:3000";
 
 let socketInstance = null;
 

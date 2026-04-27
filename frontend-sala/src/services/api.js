@@ -1,10 +1,9 @@
 // src/services/api.js
 
 import axios from "axios";
-import { API_URL } from "../config";
 
 // ✅ Base URL configurable
-const API_BASE_URL = API_URL;
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
 // ✅ Crear instància axios
 const api = axios.create({
