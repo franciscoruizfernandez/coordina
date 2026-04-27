@@ -1,7 +1,8 @@
 import { io } from "socket.io-client";
+import { WS_URL } from "../config.js";
 
 // ✅ URL del backend WebSocket
-const SOCKET_URL = "http://localhost:3000";
+const SOCKET_URL = WS_URL;
 
 let socketInstance = null;
 
