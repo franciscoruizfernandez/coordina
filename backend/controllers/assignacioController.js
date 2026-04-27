@@ -5,6 +5,7 @@ import Incidencia from '../models/Incidencia.js';
 import Indicatiu from '../models/Indicatiu.js';
 import EsdevenimentTracabilitat from '../models/EsdevenimentTracabilitat.js';
 import { trobarMesProper } from '../utils/haversine.js';
+import { emetreIncidenciaAssignada } from '../sockets/emissors.js';
 
 // Helper de traçabilitat
 const registrarEsdeveniment = async (tipus, usuariId, incidenciaId, indicatiuId, descripcio, dades = {}) => {
@@ -120,6 +121,10 @@ export const crearAssignacioManual = async (req, res, next) => {
     // Obtenir assignació completa amb JOINs per retornar-la
     const assignacioCompleta = await Assignacio.trobarPerId(novaAssignacio.id);
 
+    
+    // EMETRE EVENT WEBSOCKET
+    emetreIncidenciaAssignada(assignacioCompleta, incidencia, indicatiu);
+
     res.status(201).json({
       exit: true,
       missatge: `Assignació manual creada. Indicatiu ${indicatiu.codi} assignat.`,
@@ -234,6 +239,10 @@ export const crearAssignacioAutomatica = async (req, res, next) => {
     );
 
     const assignacioCompleta = await Assignacio.trobarPerId(novaAssignacio.id);
+
+    
+    // EMETRE EVENT WEBSOCKET
+    emetreIncidenciaAssignada(assignacioCompleta, incidencia, mesProper);
 
     res.status(201).json({
       exit: true,

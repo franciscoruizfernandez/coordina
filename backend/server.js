@@ -1,14 +1,14 @@
 // backend/server.js
 import express from 'express';
+import { createServer } from 'http';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import { testConnection } from './config/database.js';
-
+import { inicialitzarSocketIO, setIOInstance } from './sockets/socketManager.js';
 
 import Usuari from './models/Usuari.js';
 import Incidencia from './models/Incidencia.js';
 import Indicatiu from './models/Indicatiu.js';
-
 
 // Rutes
 import authRoutes         from './routes/authRoutes.js';
@@ -16,60 +16,43 @@ import incidenciaRoutes   from './routes/incidenciaRoutes.js';
 import indicatiuRoutes    from './routes/indicatiuRoutes.js';
 import assignacioRoutes   from './routes/assignacioRoutes.js';
 import tracabilitatRoutes from './routes/tracabilitatRoutes.js';
+import missatgeRoutes from './routes/missatgeRoutes.js';
 
-
-// Carregar variables d'entorn
 dotenv.config();
 
-// Crear aplicació Express
 const app = express();
+const httpServer = createServer(app);
 
-// Configuració
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
-
-
-
 // ==============================================================
-// CONFIGURACIÓ CORS
+// CORS
 // ==============================================================
-
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:5173', 'http://localhost:5174'];
+  : ['http://localhost:5173', 'http://localhost:5174', 'http://127.0.0.1:5500'];
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Permetre peticions sense origin (com Postman, curl, apps mòbils)
     if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('No permès per CORS'));
-    }
+    allowedOrigins.includes(origin)
+      ? callback(null, true)
+      : callback(new Error('No permès per CORS'));
   },
-  credentials: true, // Permetre cookies
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
 app.use(cors(corsOptions));
 
-
-
-
-
 // ==============================================================
-// MIDDLEWARE BÀSICS
+// MIDDLEWARE
 // ==============================================================
-
-// 1. Body parser - Per llegir JSON i URL-encoded
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 2. Logger simple per desenvolupament
 if (NODE_ENV === 'development') {
   app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
@@ -77,116 +60,89 @@ if (NODE_ENV === 'development') {
   });
 }
 
-
-
-
-
 // ==============================================================
-// RUTES
+// RUTES PÚBLIQUES
 // ==============================================================
-
-// Ruta de health check (verificar que el servidor funciona)
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'OK',
     message: 'Backend COORDINA funcionant correctament',
     timestamp: new Date().toISOString(),
     environment: NODE_ENV,
+    websockets: 'actiu', // 🆕 del segon
   });
 });
 
-// Ruta arrel
 app.get('/', (req, res) => {
   res.json({
     message: 'API COORDINA - Sistema de Coordinació Operativa Policial',
     version: '1.0.0',
+    websockets: 'Socket.io integrat', // 🆕 del segon
     endpoints: {
       health: '/health',
       api: '/api/v1',
+      auth: '/api/auth',
+      incidencies: '/api/incidencies',
+      indicatius: '/api/indicatius',
+      assignacions: '/api/assignacions',
+      tracabilitat: '/api/tracabilitat',
+      missatges: '/api/missatges',
     },
   });
 });
 
-
+// ==============================================================
+// RUTES API
+// ==============================================================
 app.use('/api/auth',          authRoutes);
 app.use('/api/incidencies',   incidenciaRoutes);
 app.use('/api/indicatius',    indicatiuRoutes);
 app.use('/api/assignacions',  assignacioRoutes);
 app.use('/api/tracabilitat',  tracabilitatRoutes);
-
-
-
-
+app.use('/api/missatges', missatgeRoutes);
 
 // ==============================================================
-// RUTES DE TEST (TEMPORALS)
+// RUTES DE TEST (es mantenen)
 // ==============================================================
-
-// Test: Llistar tots els usuaris
 app.get('/test/usuaris', async (req, res, next) => {
   try {
     const usuaris = await Usuari.llistarTots();
-    res.json({
-      exit: true,
-      total: usuaris.length,
-      dades: usuaris,
-    });
+    res.json({ exit: true, total: usuaris.length, dades: usuaris });
   } catch (error) {
     next(error);
   }
 });
 
-// Test: Llistar totes les incidències
 app.get('/test/incidencies', async (req, res, next) => {
   try {
     const incidencies = await Incidencia.llistarTotes();
-    res.json({
-      exit: true,
-      total: incidencies.length,
-      dades: incidencies,
-    });
+    res.json({ exit: true, total: incidencies.length, dades: incidencies });
   } catch (error) {
     next(error);
   }
 });
 
-// Test: Llistar tots els indicatius
 app.get('/test/indicatius', async (req, res, next) => {
   try {
     const indicatius = await Indicatiu.llistarTots();
-    res.json({
-      exit: true,
-      total: indicatius.length,
-      dades: indicatius,
-    });
+    res.json({ exit: true, total: indicatius.length, dades: indicatius });
   } catch (error) {
     next(error);
   }
 });
 
-// Test: Llistar indicatius disponibles
 app.get('/test/indicatius/disponibles', async (req, res, next) => {
   try {
     const disponibles = await Indicatiu.trobarDisponibles();
-    res.json({
-      exit: true,
-      total: disponibles.length,
-      dades: disponibles,
-    });
+    res.json({ exit: true, total: disponibles.length, dades: disponibles });
   } catch (error) {
     next(error);
   }
 });
 
-
-
-
-
 // ==============================================================
-// GESTIÓ D'ERRORS
+// ERRORS
 // ==============================================================
-
-// Ruta no trobada (404)
 app.use((req, res) => {
   res.status(404).json({
     error: 'Not Found',
@@ -195,49 +151,49 @@ app.use((req, res) => {
   });
 });
 
-// Error handler global
 app.use((err, req, res, next) => {
   console.error('❌ Error:', err);
 
-  const statusCode = err.statusCode || 500;
-  const message = err.message || 'Error intern del servidor';
-
-  res.status(statusCode).json({
+  res.status(err.statusCode || 500).json({
     error: true,
-    message: message,
+    message: err.message || 'Error intern del servidor',
     ...(NODE_ENV === 'development' && { stack: err.stack }),
   });
 });
 
-
-
-
-
 // ==============================================================
-// INICIAR SERVIDOR
+// START SERVER
 // ==============================================================
-
 const startServer = async () => {
   try {
-    // Provar connexió a BD abans d'arrencar el servidor
-    console.log('🔌 Provant connexió a la base de dades...');
+    console.log('🔌 Connectant a la base de dades...');
     const dbConnected = await testConnection();
 
     if (!dbConnected) {
-      console.error('❌ No s\'ha pogut connectar a la base de dades');
-      console.error('💡 Verifica les credencials al fitxer .env');
+      console.error("❌ No s'ha pogut connectar a la BD");
       process.exit(1);
     }
 
-    // Si la connexió és exitosa, arrencar el servidor
-    app.listen(PORT, () => {
+    const io = inicialitzarSocketIO(httpServer);
+    setIOInstance(io);
+
+    httpServer.listen(PORT, () => {
       console.log('='.repeat(50));
-      console.log('🚀 Servidor COORDINA iniciat');
+      console.log('🚀 COORDINA Backend + WebSockets iniciat');
       console.log('='.repeat(50));
       console.log(`📍 URL: http://localhost:${PORT}`);
       console.log(`🌍 Entorn: ${NODE_ENV}`);
       console.log(`💾 Base de dades: Connectada`);
+      console.log(`🔌 WebSockets: Socket.io actiu`);
       console.log(`⏰ Hora inici: ${new Date().toLocaleString()}`);
+      console.log('='.repeat(50));
+      console.log('Endpoints actius:');
+      console.log('  /api/auth');
+      console.log('  /api/incidencies');
+      console.log('  /api/indicatius');
+      console.log('  /api/assignacions');
+      console.log('  /api/tracabilitat');
+      console.log('  [WS] Socket.io → Temps real');
       console.log('='.repeat(50));
     });
   } catch (error) {
@@ -248,14 +204,14 @@ const startServer = async () => {
 
 startServer();
 
-// Gestionar tancament graciós
+// Shutdown
 process.on('SIGTERM', () => {
-  console.log('👋 SIGTERM rebut, tancant servidor...');
+  console.log('👋 Tancant servidor...');
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
-  console.log('\n👋 SIGINT rebut, tancant servidor...');
+  console.log('\n👋 Tancant servidor...');
   process.exit(0);
 });
 

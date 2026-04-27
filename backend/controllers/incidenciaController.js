@@ -3,6 +3,11 @@
 import Incidencia, { TIPOLOGIES, PRIORITATS, ESTATS } from '../models/Incidencia.js';
 import EsdevenimentTracabilitat from '../models/EsdevenimentTracabilitat.js';
 import { esDinsRegio, missatgeForaDeRegio } from '../utils/limitGeografic.js';
+import {
+  emetreNovaIncidencia,
+  emetreIncidenciaActualitzada,
+  emetreCanviEstatIncidencia,
+} from '../sockets/emissors.js'; 
 
 // ==============================================================
 // HELPER INTERN: Registrar traçabilitat
@@ -225,7 +230,7 @@ export const crearIncidencia = async (req, res, next) => {
       observacions: observacions || null,
     });
 
-    // ✅ Registrar a traçabilitat
+    // registre tracabilitat
     await registrarEsdeveniment(
       'creacio_incidencia',
       req.usuari?.userId || null,
@@ -234,6 +239,9 @@ export const crearIncidencia = async (req, res, next) => {
       `Nova incidència creada: ${tipologia} - Prioritat: ${prioritat}`,
       { tipologia, prioritat }
     );
+
+    // EMETRE EVENT WEBSOCKET
+    emetreNovaIncidencia(novaIncidencia);
 
     res.status(201).json({
       exit: true,
@@ -356,6 +364,9 @@ export const actualitzarIncidencia = async (req, res, next) => {
       }
     );
 
+    // EMETRE EVENT WEBSOCKET
+    emetreIncidenciaActualitzada(incidenciaActualitzada);
+
     res.json({
       exit: true,
       missatge: 'Incidència actualitzada correctament',
@@ -440,6 +451,9 @@ export const canviarEstatIncidencia = async (req, res, next) => {
       `Canvi d'estat: ${estatActual} → ${estat}`,
       { estat_anterior: estatActual, estat_nou: estat }
     );
+
+    // 🆕 EMETRE EVENT WEBSOCKET
+    emetreCanviEstatIncidencia(id, estatActual, estat);
 
     res.json({
       exit: true,

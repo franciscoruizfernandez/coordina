@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <title>Test WebSocket COORDINA</title>
+  <script src="https://cdn.socket.io/4.8.0/socket.io.min.js"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+    input, button { padding: 8px; margin: 5px; }
+    #status { margin-top: 10px; font-weight: bold; }
+    #log { margin-top: 20px; background: white; padding: 10px; max-height: 400px; overflow-y: auto; }
+    .ok { color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+
+<h1>🔌 Test WebSocket COORDINA</h1>
+
+<h2>Login</h2>
+<input type="text" id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
+<button onclick="login()">Login</button>
+
+<div id="status">❌ No connectat</div>
+
+<hr>
+
+<h2>Accions</h2>
+<button onclick="actualitzarGPS()">📍 Actualitzar GPS</button>
+<button onclick="canviarEstat()">🚔 Canviar Estat</button>
+<button onclick="enviarMissatge()">💬 Enviar Missatge</button>
+
+<div id="log"></div>
+
+<script>
+  const BASE_URL = "http://localhost:3000";
+  let socket = null;
+  let token = null;
+  let connectat = false;
+  let cuaMissatges = [];
+
+  function log(msg) {
+    const div = document.getElementById("log");
+    div.innerHTML = `<div>${new Date().toLocaleTimeString()} - ${msg}</div>` + div.innerHTML;
+  }
+
+  async function login() {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    try {
+      const response = await fetch(`${BASE_URL}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await response.json();
+
+      if (!data.exit) {
+        log("❌ Error login");
+        return;
+      }
+
+      token = data.token;
+      log("✅ Login correcte");
+
+      connectWebSocket();
+
+    } catch (error) {
+      log("❌ Error login: " + error.message);
+    }
+  }
+
+  function connectWebSocket() {
+    socket = io(BASE_URL, {
+      auth: { token },
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      transports: ["websocket"]
+    });
+
+    socket.on("connect", () => {
+      connectat = true;
+      document.getElementById("status").innerHTML = "✅ Connectat";
+      document.getElementById("status").className = "ok";
+      log("✅ WebSocket connectat");
+
+      if (cuaMissatges.length > 0) {
+        log("📤 Reenviant missatges pendents...");
+        cuaMissatges.forEach(({ event, data }) => {
+          socket.emit(event, data);
+        });
+        cuaMissatges = [];
+      }
+    });
+
+    socket.on("disconnect", (reason) => {
+      connectat = false;
+      document.getElementById("status").innerHTML = "❌ Desconnectat";
+      document.getElementById("status").className = "error";
+      log("❌ Desconnectat: " + reason);
+    });
+
+    socket.on("reconnect", () => {
+      log("✅ Reconnectat correctament");
+    });
+
+    socket.on("nou_missatge", (data) => {
+      log("💬 Missatge rebut: " + data.missatge?.contingut);
+    });
+
+    socket.on("nova_incidencia", () => {
+      log("🚨 Nova incidència rebuda");
+    });
+
+    socket.on("ubicacio_indicatiu", () => {
+      log("📍 GPS actualitzat");
+    });
+  }
+
+  function enviarEvent(event, data) {
+    if (connectat) {
+      socket.emit(event, data);
+    } else {
+      log("📦 Guardant event en cua");
+      cuaMissatges.push({ event, data });
+    }
+  }
+
+  function actualitzarGPS() {
+    const indicatiuId = prompt("ID Indicatiu:");
+    enviarEvent("actualitzar_ubicacio", {
+      indicatiu_id: indicatiuId,
+      ubicacio_lat: 41.45 + Math.random() * 0.01,
+      ubicacio_lon: 2.23 + Math.random() * 0.01
+    });
+  }
+
+  function canviarEstat() {
+    const indicatiuId = prompt("ID Indicatiu:");
+    enviarEvent("canviar_estat_operatiu", {
+      indicatiu_id: indicatiuId,
+      estat_operatiu: "en_servei"
+    });
+  }
+
+  function enviarMissatge() {
+    const incidenciaId = prompt("ID Incidència:");
+    const contingut = prompt("Contingut:");
+    enviarEvent("enviar_missatge", {
+      incidencia_id: incidenciaId,
+      contingut
+    });
+  }
+</script>
+
+</body>
+</html>

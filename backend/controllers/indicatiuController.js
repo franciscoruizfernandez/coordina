@@ -2,6 +2,10 @@
 
 import Indicatiu, { TIPUS_UNITAT, ESTATS_OPERATIUS } from '../models/Indicatiu.js';
 import EsdevenimentTracabilitat from '../models/EsdevenimentTracabilitat.js';
+import {
+  emetreUbicacioIndicatiu,
+  emetreCanviEstatIndicatiu,
+} from '../sockets/emissors.js';
 
 // Helper de traçabilitat intern
 const registrarEsdeveniment = async (tipus, usuariId, incidenciaId, indicatiuId, descripcio, dades = {}) => {
@@ -234,6 +238,9 @@ export const actualitzarUbicacio = async (req, res, next) => {
       { lat, lon }
     );
 
+    // EMETRE EVENT WEBSOCKET (GPS en temps real)
+    emetreUbicacioIndicatiu(indicatiuActualitzat);
+
     res.json({
       exit: true,
       missatge: 'Ubicació actualitzada correctament',
@@ -299,6 +306,9 @@ export const canviarEstatIndicatiu = async (req, res, next) => {
       `Canvi d'estat operatiu: ${estatAnterior} → ${estat_operatiu}`,
       { estat_anterior: estatAnterior, estat_nou: estat_operatiu }
     );
+
+    // EMETRE EVENT WEBSOCKET
+    emetreCanviEstatIndicatiu(id, estatAnterior, estat_operatiu);
 
     res.json({
       exit: true,
