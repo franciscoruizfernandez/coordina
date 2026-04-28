@@ -1,0 +1,2805 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 0,
+        "municipi": "Teià"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3146157368635016,
+          41.50004832181135
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 1,
+        "municipi": "Palau-solità i Plegamans"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.1851516647664955,
+          41.60082633554858
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 2,
+        "municipi": "Sant Quirze del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.0737663440592233,
+          41.523200778338
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 3,
+        "municipi": "Bigues i Riells del Fai"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.190614349042044,
+          41.69114902820156
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 4,
+        "municipi": "Santa Maria de Martorelles"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2557814602776367,
+          41.52525190817271
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 5,
+        "municipi": "Sant Andreu de Llavaneres"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.475169902484859,
+          41.58134650949559
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 6,
+        "municipi": "Palau-solità i Plegamans"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.1680897244722424,
+          41.581133815773875
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 7,
+        "municipi": "Vilanova del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.315520420917086,
+          41.55083708322735
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 8,
+        "municipi": "Vallromanes"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3016419883974555,
+          41.5326804796236
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 9,
+        "municipi": "Castellbisbal"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1.9717668140545694,
+          41.470464964504636
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 10,
+        "municipi": "Tagamanent"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.334609600427425,
+          41.736635256718216
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 11,
+        "municipi": "Cardedeu"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3666050010382143,
+          41.65575500511514
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 12,
+        "municipi": "Sant Llorenç Savall"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.048237286423257,
+          41.666470279818554
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 13,
+        "municipi": "Sant Adrià de Besòs"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2191007057841134,
+          41.426400462905775
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 14,
+        "municipi": "Vilassar de Dalt"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.375348066640256,
+          41.51154715593102
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 15,
+        "municipi": "Vilassar de Mar"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.374455989556024,
+          41.50503956996433
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 16,
+        "municipi": "Mataró"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.4554799779430936,
+          41.542062266492756
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 17,
+        "municipi": "Sant Esteve de Palautordera"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.4073627221692737,
+          41.72751669059191
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 18,
+        "municipi": "el Masnou"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3098641989841857,
+          41.48224207895646
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 19,
+        "municipi": "Lliçà de Vall"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2504128060440602,
+          41.592294000890384
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 20,
+        "municipi": "Sant Quirze del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.079520289604553,
+          41.516749085431
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 21,
+        "municipi": "la Garriga"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.280018897015061,
+          41.67312652893595
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 22,
+        "municipi": "Argentona"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.4064589175449433,
+          41.57110340777141
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 23,
+        "municipi": "Sant Cebrià de Vallalta"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.6114603484571437,
+          41.635926101715135
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 24,
+        "municipi": "Mollet del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2155064481353026,
+          41.55099418952769
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 25,
+        "municipi": "Gallifa"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.1318710262626173,
+          41.706318619085664
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 26,
+        "municipi": "Mollet del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.22941829178071,
+          41.5534899435243
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 27,
+        "municipi": "Sant Iscle de Vallalta"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.5563502519212182,
+          41.630069637023574
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 28,
+        "municipi": "Santa Coloma de Gramenet"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.1974547534304154,
+          41.46713464220688
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 29,
+        "municipi": "Sant Antoni de Vilamajor"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.372631927101509,
+          41.64636457571237
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 30,
+        "municipi": "Aiguafreda"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2485910241728253,
+          41.77391792715782
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 31,
+        "municipi": "Teià"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3346749287479054,
+          41.49775480365124
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 32,
+        "municipi": "Alella"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.293995591389979,
+          41.512815724878045
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 33,
+        "municipi": "Arenys de Munt"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.5467936505448727,
+          41.60369355232287
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 34,
+        "municipi": "Sabadell"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.108839086104316,
+          41.54212621561254
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 35,
+        "municipi": "Granollers"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.275025606766234,
+          41.59231518310543
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 36,
+        "municipi": "Sant Cebrià de Vallalta"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.588811511513492,
+          41.63024796314296
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 37,
+        "municipi": "el Masnou"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3029158966350094,
+          41.476214537617054
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 38,
+        "municipi": "Sant Adrià de Besòs"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2207491681355642,
+          41.429717393418194
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 39,
+        "municipi": "Castellar del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.0412096851383392,
+          41.653107248642186
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 40,
+        "municipi": "Montmeló"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.259503604006966,
+          41.561912458963924
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 41,
+        "municipi": "Sabadell"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.089083332970525,
+          41.54746823761763
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 42,
+        "municipi": "Llinars del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.387015838119445,
+          41.63624771752002
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 43,
+        "municipi": "Santa Coloma de Gramenet"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2177105237430013,
+          41.45111791814537
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 44,
+        "municipi": "Òrrius"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3577790757971355,
+          41.55726417900619
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 45,
+        "municipi": "Cabrera de Mar"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.4214694199081706,
+          41.520674466508865
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 46,
+        "municipi": "Dosrius"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.461262286573308,
+          41.601585897415085
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 47,
+        "municipi": "Badalona"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.228173070095055,
+          41.477527335697076
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 48,
+        "municipi": "Montornès del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.263833814381482,
+          41.540460977728486
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 49,
+        "municipi": "Sant Adrià de Besòs"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.232555962196553,
+          41.419060220231074
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 50,
+        "municipi": "Montgat"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2839670699805072,
+          41.468010003350926
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 51,
+        "municipi": "Montgat"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2692671885780507,
+          41.46541964029481
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 52,
+        "municipi": "Sant Antoni de Vilamajor"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.408057188113605,
+          41.64985282644982
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 53,
+        "municipi": "Vallgorguina"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.4755857870508304,
+          41.656114101056
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 54,
+        "municipi": "Cabrils"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.346805145702416,
+          41.5329275094004
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 55,
+        "municipi": "Sentmenat"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.098496191309001,
+          41.656962300262386
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 56,
+        "municipi": "Pineda de Mar"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.6507395954050748,
+          41.63780263923283
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 57,
+        "municipi": "Sant Pere de Vilamajor"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.37730638494195,
+          41.72354478137191
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 58,
+        "municipi": "Sant Antoni de Vilamajor"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.41458885942855,
+          41.66699054935276
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 59,
+        "municipi": "Santa Maria de Martorelles"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.262239001956978,
+          41.50973254697108
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 60,
+        "municipi": "Badia del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.115599118227041,
+          41.50949771434681
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 61,
+        "municipi": "Viladecavalls"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1.9396207119433324,
+          41.55538319610996
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 62,
+        "municipi": "Montmeló"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2527995623379464,
+          41.54703220180083
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 63,
+        "municipi": "Sant Pere de Vilamajor"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3652795846216756,
+          41.74258163865231
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 64,
+        "municipi": "Terrassa"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.027994344477915,
+          41.58261444957712
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 65,
+        "municipi": "Polinyà"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.1700178593698287,
+          41.551540396191136
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 66,
+        "municipi": "Campins"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.4743771760733932,
+          41.71190989855751
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 67,
+        "municipi": "Mollet del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2156546305379523,
+          41.555335767690735
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 68,
+        "municipi": "Sant Vicenç de Montalt"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.5166282880358515,
+          41.575711717001575
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 69,
+        "municipi": "Badia del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.109586876907052,
+          41.5100571720099
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 70,
+        "municipi": "Sant Cebrià de Vallalta"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.5915233756490474,
+          41.628801087492334
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 71,
+        "municipi": "Santa Susanna"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.705752691213419,
+          41.64626988086748
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 72,
+        "municipi": "Santa Maria de Martorelles"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2638462527813736,
+          41.50667623045015
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 73,
+        "municipi": "Barberà del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.1215048967091126,
+          41.509516843139764
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 74,
+        "municipi": "Canet de Mar"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.571764469069279,
+          41.598049914929256
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 75,
+        "municipi": "Sant Cebrià de Vallalta"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.6160064844623596,
+          41.637957883649584
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 76,
+        "municipi": "Malgrat de Mar"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.7557474296553477,
+          41.64852963289041
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 77,
+        "municipi": "el Masnou"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3257689241332087,
+          41.48750945372779
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 78,
+        "municipi": "Vallgorguina"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.477963937139992,
+          41.65699167436926
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 79,
+        "municipi": "Castellar del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.0882132848729182,
+          41.58222432387723
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 80,
+        "municipi": "Sentmenat"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.097143464243868,
+          41.656696673563985
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 81,
+        "municipi": "Campins"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.471664271695377,
+          41.729188336365816
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 82,
+        "municipi": "Santa Maria de Palautordera"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.4630029843109607,
+          41.68168530614648
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 83,
+        "municipi": "Mataró"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.4251566923470045,
+          41.54394590450711
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 84,
+        "municipi": "Gallifa"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.1005854953291028,
+          41.6972562855358
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 85,
+        "municipi": "Santa Perpètua de Mogoda"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.1521866837573462,
+          41.527718104867496
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 86,
+        "municipi": "Sant Pere de Vilamajor"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3833433325602944,
+          41.732580609483556
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 87,
+        "municipi": "Arenys de Munt"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.5092593290206757,
+          41.624293825370806
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 88,
+        "municipi": "Vallromanes"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.295697811689612,
+          41.51949677443972
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 89,
+        "municipi": "Premià de Dalt"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3569856429966887,
+          41.497449681339276
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 90,
+        "municipi": "Tiana"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.270472599880281,
+          41.47394035444732
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 91,
+        "municipi": "Sentmenat"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.110360689412028,
+          41.64887984001341
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 92,
+        "municipi": "Granollers"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2783354562360203,
+          41.61114237207526
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 93,
+        "municipi": "Vallgorguina"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.469122078380128,
+          41.65352240057434
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 94,
+        "municipi": "Rubí"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.0121061503408075,
+          41.476913030493094
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 95,
+        "municipi": "Caldes de Montbui"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.1451463614125577,
+          41.63237059003293
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 96,
+        "municipi": "Castellbisbal"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1.9833810820609137,
+          41.51197195041249
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 97,
+        "municipi": "Teià"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.307897680311653,
+          41.51189713845824
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 98,
+        "municipi": "Premià de Dalt"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3274877341092384,
+          41.51778107549421
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 99,
+        "municipi": "Canet de Mar"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.576250146287178,
+          41.58536971852673
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 100,
+        "municipi": "Vallgorguina"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.5314529661044394,
+          41.65141923731952
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 101,
+        "municipi": "Sabadell"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.0861450338862855,
+          41.580913829640046
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 102,
+        "municipi": "Òrrius"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3387809632279235,
+          41.55638084045852
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 103,
+        "municipi": "Montmeló"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.247882101305353,
+          41.558413360617585
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 104,
+        "municipi": "Cerdanyola del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.128773730948523,
+          41.4830871712351
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 105,
+        "municipi": "Sant Pere de Vilamajor"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.389449024130897,
+          41.69522944963515
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 106,
+        "municipi": "Palafolls"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.7279160704098966,
+          41.67325027483703
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 107,
+        "municipi": "Vacarisses"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1.9050267692808702,
+          41.60672652502033
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 108,
+        "municipi": "Sant Antoni de Vilamajor"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3901937752781963,
+          41.67337166231727
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 109,
+        "municipi": "Sant Cebrià de Vallalta"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.6159787688641813,
+          41.627097505516154
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 110,
+        "municipi": "Santa Maria de Palautordera"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.47246551434794,
+          41.675525930400504
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 111,
+        "municipi": "Castellbisbal"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1.989496494567746,
+          41.48205294833067
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 112,
+        "municipi": "Arenys de Mar"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.5385010556197725,
+          41.58320824107499
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 113,
+        "municipi": "Dosrius"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.398737955451798,
+          41.6053900784693
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 114,
+        "municipi": "Sant Iscle de Vallalta"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.5691015521909293,
+          41.6496834529838
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 115,
+        "municipi": "Palau-solità i Plegamans"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.1640494908187833,
+          41.57532256916084
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 116,
+        "municipi": "Òrrius"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.348496833834405,
+          41.55241853440755
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 117,
+        "municipi": "Santa Maria de Martorelles"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2592773966070383,
+          41.518557382142
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 118,
+        "municipi": "Sant Esteve de Palautordera"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.4133478089160185,
+          41.70034647663115
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 119,
+        "municipi": "les Franqueses del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.334830597645226,
+          41.648563276917734
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 120,
+        "municipi": "Sant Llorenç Savall"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.0212845455030175,
+          41.67215680577196
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 121,
+        "municipi": "les Franqueses del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3101003134393734,
+          41.67102937608054
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 122,
+        "municipi": "Cerdanyola del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.0829552338023922,
+          41.507083297136376
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 123,
+        "municipi": "Caldes de Montbui"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.1524738315278453,
+          41.641093683839394
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 124,
+        "municipi": "Canovelles"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.256218243436005,
+          41.630890041554885
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 125,
+        "municipi": "Granollers"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.266280166511193,
+          41.59591239801839
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 126,
+        "municipi": "Polinyà"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.158368118118778,
+          41.54118336964627
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 127,
+        "municipi": "Sant Pol de Mar"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.612434382787813,
+          41.60296092634979
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 128,
+        "municipi": "Vilassar de Mar"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3898029349855885,
+          41.50302993147478
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 129,
+        "municipi": "Rellinars"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1.8974315821301309,
+          41.63723540621008
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 130,
+        "municipi": "Tordera"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.7528742737107086,
+          41.69164106883494
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 131,
+        "municipi": "Aiguafreda"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.281894683134722,
+          41.788719177036185
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 132,
+        "municipi": "Sant Adrià de Besòs"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.225998239376955,
+          41.419977397879705
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 133,
+        "municipi": "Santa Eulàlia de Ronçana"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2071558961483144,
+          41.64783818412072
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 134,
+        "municipi": "Rellinars"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1.9085033969829832,
+          41.66167583697893
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 135,
+        "municipi": "Sant Cebrià de Vallalta"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.6118274850836434,
+          41.613464369627785
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 136,
+        "municipi": "Rubí"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.0086292302639466,
+          41.528934920332446
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 137,
+        "municipi": "Palau-solità i Plegamans"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.186547623183164,
+          41.593052326986815
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 138,
+        "municipi": "Alella"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3054369758798576,
+          41.5012277245008
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 139,
+        "municipi": "la Roca del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3603300356408456,
+          41.579493484410264
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 140,
+        "municipi": "les Franqueses del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.298695364483136,
+          41.63313468512653
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 141,
+        "municipi": "Matadepera"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.027248541430796,
+          41.64854360380334
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 142,
+        "municipi": "Montmeló"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2401979912050405,
+          41.5486518197171
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 143,
+        "municipi": "Vilanova del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.291035846469617,
+          41.54123997547581
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 144,
+        "municipi": "Santa Maria de Palautordera"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.4491447138034066,
+          41.669103179948216
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 145,
+        "municipi": "Sant Llorenç Savall"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.068676155161167,
+          41.701285658211944
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 146,
+        "municipi": "Aiguafreda"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2549362867328764,
+          41.78522934659599
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 147,
+        "municipi": "Arenys de Munt"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.5235349687357944,
+          41.60371493494035
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 148,
+        "municipi": "Vallromanes"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3050726065123555,
+          41.52648122998881
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 149,
+        "municipi": "Premià de Dalt"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3362626357234455,
+          41.50269102797402
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 150,
+        "municipi": "Sant Pere de Vilamajor"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3766364925463623,
+          41.73122728903857
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 151,
+        "municipi": "Palafolls"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.750163869678001,
+          41.66451633549594
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 152,
+        "municipi": "Sant Fost de Campsentelles"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.216244791730309,
+          41.49958814271419
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 153,
+        "municipi": "Martorelles"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2310202452035814,
+          41.53749897282191
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 154,
+        "municipi": "Alella"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.280957002612172,
+          41.505011076104935
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 155,
+        "municipi": "Cardedeu"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.351571045309643,
+          41.66002308487371
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 156,
+        "municipi": "Caldes de Montbui"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.1638867382350004,
+          41.60947619465014
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 157,
+        "municipi": "Castellar del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.0860242295617777,
+          41.585956161455314
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 158,
+        "municipi": "Sant Quirze del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.092937445383838,
+          41.535195499445955
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 159,
+        "municipi": "Calella"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.6487824792515435,
+          41.634997911510624
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 160,
+        "municipi": "Santa Maria de Martorelles"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2754948955605094,
+          41.51821873299059
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 161,
+        "municipi": "Dosrius"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.4581349833655812,
+          41.59815088643395
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 162,
+        "municipi": "Montornès del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.265291441139865,
+          41.55624306539584
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 163,
+        "municipi": "Barberà del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.122989319726697,
+          41.5167165220124
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 164,
+        "municipi": "Lliçà de Vall"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.254661308000282,
+          41.58968154177998
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 165,
+        "municipi": "Vacarisses"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1.8981060118062913,
+          41.578382089037625
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 166,
+        "municipi": "Lliçà d'Amunt"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2246937338132704,
+          41.633693815978496
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 167,
+        "municipi": "Alella"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2896372856038627,
+          41.50436615729451
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 168,
+        "municipi": "Tordera"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.747755044168193,
+          41.71424210532838
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 169,
+        "municipi": "Lliçà d'Amunt"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.1920130782069087,
+          41.598019444153714
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 170,
+        "municipi": "Sant Llorenç Savall"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.0225025394103535,
+          41.67917904264561
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 171,
+        "municipi": "Castellbisbal"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1.970657524720597,
+          41.49134386358059
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 172,
+        "municipi": "Cabrera de Mar"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.419369034635137,
+          41.51727769630779
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 173,
+        "municipi": "Lliçà de Vall"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.214746305933246,
+          41.58958707934989
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 174,
+        "municipi": "Argentona"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.419477176011216,
+          41.53414187894828
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 175,
+        "municipi": "Lliçà de Vall"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2461158929647045,
+          41.588740552087856
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 176,
+        "municipi": "Palafolls"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.750699918854033,
+          41.66395837489164
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 177,
+        "municipi": "Campins"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.4633130698973713,
+          41.72354142836267
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 178,
+        "municipi": "Alella"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.285331701748318,
+          41.50151996751931
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 179,
+        "municipi": "Granollers"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2841762632231943,
+          41.593242568276736
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 180,
+        "municipi": "Santa Maria de Palautordera"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.438502119696317,
+          41.68308308985865
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 181,
+        "municipi": "Ullastrell"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1.9535611155923929,
+          41.5151040778458
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 182,
+        "municipi": "Palafolls"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.70221397430867,
+          41.6631633000369
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 183,
+        "municipi": "Montmeló"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2412977150212394,
+          41.55434864973655
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 184,
+        "municipi": "Santa Maria de Palautordera"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.4470021031017355,
+          41.67191895423769
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 185,
+        "municipi": "les Franqueses del Vallès"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3142957113657365,
+          41.657288769286886
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 186,
+        "municipi": "Badalona"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.216745318070647,
+          41.44076914794582
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 187,
+        "municipi": "Palau-solità i Plegamans"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.1981061964078,
+          41.5841192216187
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 188,
+        "municipi": "Campins"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.4728061454200607,
+          41.71457781151108
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 189,
+        "municipi": "Sant Pol de Mar"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.6015256475621933,
+          41.60790068836901
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 190,
+        "municipi": "Viladecavalls"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1.946623194037629,
+          41.557322828723365
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 191,
+        "municipi": "Viladecavalls"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1.9518576134862946,
+          41.54257265354765
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 192,
+        "municipi": "Palau-solità i Plegamans"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.196453725172317,
+          41.58611041141195
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 193,
+        "municipi": "Lliçà de Vall"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2336784135089394,
+          41.58268509920168
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 194,
+        "municipi": "Ripollet"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.168696770439844,
+          41.49286770456703
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 195,
+        "municipi": "Dosrius"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.442635863038877,
+          41.580288253829394
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 196,
+        "municipi": "Caldes de Montbui"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.182119178622873,
+          41.645177021509426
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 197,
+        "municipi": "Tagamanent"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.3171147943972756,
+          41.73215976663259
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 198,
+        "municipi": "Sentmenat"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.161975932499586,
+          41.60362358355857
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 199,
+        "municipi": "la Llagosta"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          2.2034564668981393,
+          41.51894606470568
+        ]
+      }
+    }
+  ]
+}
