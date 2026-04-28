@@ -20,6 +20,11 @@
   "author": "El teu nom",
   "license": "MIT",
   "dependencies": {
+    "@turf/along": "^7.3.5",
+    "@turf/bbox": "^7.3.5",
+    "@turf/boolean-point-in-polygon": "^7.3.5",
+    "@turf/helpers": "^7.3.5",
+    "@turf/length": "^7.3.5",
     "axios": "^1.15.1",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
