@@ -327,6 +327,7 @@ export const acceptarAssignacio = async (req, res, next) => {
 export const finalitzarAssignacio = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const { observacions } = req.body;
 
     const assignacio = await Assignacio.trobarPerId(id);
     if (!assignacio) {
@@ -344,21 +345,20 @@ export const finalitzarAssignacio = async (req, res, next) => {
     }
 
     await Assignacio.finalitzar(id);
-
-    // Alliberar l'indicatiu (tornar a disponible)
     await Indicatiu.desassignarIncidencia(assignacio.indicatiu_id);
 
-    // Canviar estat incidència a "resolta"
-    await Incidencia.canviarEstat(assignacio.incidencia_id, 'resolta');
+    await Incidencia.canviarEstat(assignacio.incidencia_id, 'resolta', observacions || null);
 
-    // ✅ US014: Traçabilitat
     await registrarEsdeveniment(
       'assignacio_finalitzada',
       req.usuari?.userId,
       assignacio.incidencia_id,
       assignacio.indicatiu_id,
       `Assignació finalitzada. Indicatiu ${assignacio.indicatiu_codi} alliberat.`,
-      { indicatiu_codi: assignacio.indicatiu_codi }
+      {
+        indicatiu_codi: assignacio.indicatiu_codi,
+        observacions: observacions || null,
+      }
     );
 
     res.json({

@@ -1,20 +1,34 @@
 // frontend-patrulles/src/App.jsx
+
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext'
+import ProtectedRoute from './components/ProtectedRoute'
+import Login from './pages/Login'
+import Dashboard from './pages/Dashboard'
+
 function App() {
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-      <div className="text-center px-6">
-        <div className="text-6xl mb-4">🚔</div>
-        <h1 className="text-3xl font-bold text-white mb-2">
-          COORDINA
-        </h1>
-        <p className="text-blue-400 text-lg">
-          App de Patrulles
-        </p>
-        <p className="text-gray-500 text-sm mt-4">
-          Configuració completada correctament
-        </p>
-      </div>
-    </div>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Ruta pública: Login */}
+          <Route path="/login" element={<Login />} />
+
+          {/* Ruta protegida: Dashboard */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Qualsevol altra ruta → redirigir a / */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }
 
