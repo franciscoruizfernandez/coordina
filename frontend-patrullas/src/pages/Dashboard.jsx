@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
 import { alliberarIndicatiu } from '../services/api'
 import useEnviarGPS from '../hooks/useEnviarGPS'
+import BotonsEstat from '../components/BotonsEstat'
+import IncidenciaAssignada from '../components/IncidenciaAssignada'
 
 function Dashboard() {
   const { usuari, indicatiu, dispatch } = useContext(AuthContext)
@@ -27,40 +29,41 @@ function Dashboard() {
     setTancantSessio(true)
 
     try {
-      // 1. Alliberar l'indicatiu al backend
       await alliberarIndicatiu('logout')
       console.log('✅ Indicatiu alliberat correctament')
     } catch (err) {
-      // Si falla l'alliberament, fem logout igualment
-      // L'indicatiu quedarà com a "zombie" fins que un admin el netegi
       console.error('⚠️ Error alliberant indicatiu:', err.message)
     }
 
-    // 2. Netejar localStorage
     localStorage.removeItem('token')
     localStorage.removeItem('usuari')
     localStorage.removeItem('indicatiu')
-
-    // 3. Actualitzar context (això desconnectarà el socket automàticament)
     dispatch({ type: 'LOGOUT' })
-
-    // 4. Redirigir a login
     navigate('/login')
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 p-4">
+    <div className="min-h-screen bg-gray-900 p-4 pb-8">
 
       {/* ─── Capçalera ─────────────────────────────── */}
       <div className="bg-gray-800 rounded-2xl p-4 mb-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-white text-lg font-bold">
-              🚔 {indicatiu?.codi || 'Sense indicatiu'}
-            </h1>
-            <p className="text-gray-400 text-sm">
-              {usuari?.nom_complet || usuari?.username}
-            </p>
+          <div className="flex items-center gap-3">
+            {/* Icona segons tipus d'unitat */}
+            <div className="text-3xl">
+              {indicatiu?.tipus_unitat === 'cotxe' && '🚔'}
+              {indicatiu?.tipus_unitat === 'moto' && '🏍️'}
+              {indicatiu?.tipus_unitat === 'furgoneta' && '🚐'}
+              {!['cotxe', 'moto', 'furgoneta'].includes(indicatiu?.tipus_unitat) && '🚗'}
+            </div>
+            <div>
+              <h1 className="text-white text-xl font-bold">
+                {indicatiu?.codi || 'Sense indicatiu'}
+              </h1>
+              <p className="text-gray-400 text-sm">
+                {usuari?.nom_complet || usuari?.username}
+              </p>
+            </div>
           </div>
           <button
             onClick={handleLogout}
@@ -74,7 +77,7 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* ─── Indicadors d'estat ────────────────────── */}
+      {/* ─── Indicadors GPS i Connexió ─────────────── */}
       <div className="grid grid-cols-2 gap-3 mb-4">
 
         {/* Indicador GPS */}
@@ -93,7 +96,9 @@ function Dashboard() {
                 ? 'Obtenint...'
                 : errorGPS
                   ? 'Error'
-                  : `±${accuracy}m`}
+                  : lat
+                    ? `±${accuracy}m`
+                    : 'Esperant...'}
             </p>
           </div>
         </div>
@@ -127,9 +132,37 @@ function Dashboard() {
         </div>
       )}
 
-      {/* ─── Coordenades actuals ───────────────────── */}
+      {/* ─── Botons d'estat operatiu ───────────────── */}
+      <div className="mb-4">
+        <BotonsEstat />
+      </div>
+
+      {/* ─── Secció incidència assignada ────────────── */}
+      <div className="mb-4">
+        {indicatiu?.incidencia_assignada_id ? (
+          <IncidenciaAssignada
+            incidenciaId={indicatiu.incidencia_assignada_id}
+            latActual={lat}
+            lonActual={lon}
+            onVeureDetalls={(incidencia) => {
+              console.log('Veure detalls de:', incidencia.id)
+              // Navegarem a la pantalla de detalls a la US-048
+            }}
+          />
+        ) : (
+          <div className="bg-gray-800 rounded-2xl p-6 text-center">
+            <div className="text-4xl mb-2">✅</div>
+            <p className="text-green-400 font-semibold">Sense incidències assignades</p>
+            <p className="text-gray-500 text-sm mt-1">
+              Esperant noves assignacions...
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* ─── Posició actual ────────────────────────── */}
       {lat && lon && (
-        <div className="bg-gray-800 rounded-2xl p-4 mb-4">
+        <div className="bg-gray-800 rounded-2xl p-4">
           <h2 className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-3">
             Posició actual
           </h2>
@@ -150,29 +183,6 @@ function Dashboard() {
           <p className="text-gray-600 text-xs mt-3">
             📡 S'envia automàticament cada 10 segons
           </p>
-        </div>
-      )}
-
-      {/* ─── Info indicatiu ────────────────────────── */}
-      {indicatiu && (
-        <div className="bg-gray-800 rounded-2xl p-4">
-          <h2 className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-3">
-            Indicatiu
-          </h2>
-          <div className="space-y-1">
-            <div className="flex justify-between">
-              <span className="text-gray-400 text-sm">Codi</span>
-              <span className="text-white text-sm">{indicatiu.codi}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400 text-sm">Tipus</span>
-              <span className="text-white text-sm">{indicatiu.tipus_unitat}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400 text-sm">Estat</span>
-              <span className="text-white text-sm">{indicatiu.estat_operatiu}</span>
-            </div>
-          </div>
         </div>
       )}
 
