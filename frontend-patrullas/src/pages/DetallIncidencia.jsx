@@ -8,6 +8,7 @@ import { AuthContext } from '../context/AuthContext'
 import { getIncidencia, getHistorialIncidencia } from '../services/api'
 import { obtenirRuta } from '../utils/ruta'
 import useEnviarGPS from '../hooks/useEnviarGPS'
+import Chat from '../components/Chat'
 
 // ─── Fix per les icones de Leaflet amb Vite ─────────────────
 // Leaflet no troba les icones per defecte amb bundlers moderns
@@ -317,6 +318,11 @@ function DetallIncidencia() {
           <p className="text-gray-300 text-sm">{incidencia.observacions}</p>
         </div>
       )}
+
+      {/* ─── Chat amb sala de control ──────────────── */}
+      <div className="mb-4">
+        <Chat incidenciaId={incidenciaId} />
+      </div>
 
       {/* ─── Botons d'acció ────────────────────────── */}
       <div className="grid grid-cols-2 gap-3 mb-4">

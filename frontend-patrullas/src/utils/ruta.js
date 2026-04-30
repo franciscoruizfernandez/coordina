@@ -1,23 +1,20 @@
 // frontend-patrulles/src/utils/ruta.js
 
-// ─── OSRM (Open Source Routing Machine) ─────────────────────
-// API pública i gratuïta de routing. No necessita API key.
-// Retorna distància real per carretera i temps de conducció.
-// Documentació: http://project-osrm.org/docs/v5.24.0/api/
-const OSRM_BASE_URL = 'https://router.project-osrm.org/route/v1/driving'
+// ─── URLs de OSRM ───────────────────────────────────────────
+// La URL pública oficial bloqueja peticions des de localhost.
+// Fem servir la URL de demo que permet CORS en desenvolupament.
+const OSRM_URL = 'https://routing.openstreetmap.de/routed-car/route/v1/driving'
 
-// ─── Obtenir ruta entre dos punts ───────────────────────────
-// Retorna: { distancia_km, distancia_text, temps_minuts, temps_text }
-// o null si no es pot calcular
 export async function obtenirRuta(latOrigen, lonOrigen, latDesti, lonDesti) {
-  // Validar que tenim totes les coordenades
   if (latOrigen == null || lonOrigen == null || latDesti == null || lonDesti == null) {
     return null
   }
 
   try {
-    // OSRM espera les coordenades en format lon,lat (al revés del habitual)
-    const url = `${OSRM_BASE_URL}/${lonOrigen},${latOrigen};${lonDesti},${latDesti}?overview=false`
+    // OSRM espera les coordenades en format lon,lat
+    const url =
+      `${OSRM_URL}/${lonOrigen},${latOrigen};${lonDesti},${latDesti}` +
+      `?overview=false&steps=false`
 
     const response = await fetch(url)
 
@@ -34,16 +31,13 @@ export async function obtenirRuta(latOrigen, lonOrigen, latDesti, lonDesti) {
     }
 
     const ruta = data.routes[0]
-
-    // ruta.distance ve en metres
-    // ruta.duration ve en segons
     const distanciaKm = ruta.distance / 1000
     const tempsMinuts = ruta.duration / 60
 
     return {
       distancia_km: distanciaKm,
       distancia_text: formatarDistancia(distanciaKm),
-      temps_minuts: (tempsMinuts*0.85),
+      temps_minuts: tempsMinuts,
       temps_text: formatarTemps(tempsMinuts),
     }
   } catch (error) {
@@ -52,19 +46,14 @@ export async function obtenirRuta(latOrigen, lonOrigen, latDesti, lonDesti) {
   }
 }
 
-// ─── Formatar distància per mostrar a la UI ─────────────────
 function formatarDistancia(km) {
-  if (km < 1) {
-    return `${Math.round(km * 1000)} m`
-  }
+  if (km < 1) return `${Math.round(km * 1000)} m`
   return `${km.toFixed(1)} km`
 }
 
-// ─── Formatar temps per mostrar a la UI ─────────────────────
 function formatarTemps(minuts) {
   if (minuts < 1) return '< 1 min'
   if (minuts < 60) return `${Math.round(minuts)} min`
-
   const hores = Math.floor(minuts / 60)
   const minutsRestants = Math.round(minuts % 60)
   return `${hores}h ${minutsRestants}min`

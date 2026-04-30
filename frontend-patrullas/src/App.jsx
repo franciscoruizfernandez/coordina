@@ -8,12 +8,18 @@ import Login from './pages/Login'
 import SeleccioIndicatiu from './pages/SeleccioIndicatiu'
 import Dashboard from './pages/Dashboard'
 import DetallIncidencia from './pages/DetallIncidencia'
+import FinalitzarServei from './pages/FinalitzarServei'
+import ActualitzacioSW from './components/ActualitzacioSW'
 
 function App() {
   return (
     <AuthProvider>
       <SocketProvider>
         <BrowserRouter>
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
           <Routes>
             {/* Ruta pública: Login */}
             <Route path="/login" element={<Login />} />
@@ -48,10 +54,23 @@ function App() {
               }
             />
 
+            {/* Ruta protegida: Finalitzar servei */}
+            <Route
+              path="/finalitzar"
+              element={
+                <ProtectedRoute>
+                  <FinalitzarServei />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Qualsevol altra ruta → redirigir a / */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
+
+        <ActualitzacioSW />
+
       </SocketProvider>
     </AuthProvider>
   )

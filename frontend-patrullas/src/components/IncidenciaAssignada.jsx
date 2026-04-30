@@ -48,7 +48,7 @@ const TIPOLOGIA_EMOJI = {
 // ─── Interval d'actualització de la ruta (30 segons) ────────
 const INTERVAL_RUTA_MS = 30000
 
-function IncidenciaAssignada({ incidenciaId, latActual, lonActual, onVeureDetalls }) {
+function IncidenciaAssignada({ incidenciaId, latActual, lonActual, onVeureDetalls, onFinalitzar }) {
   const [incidencia, setIncidencia] = useState(null)
   const [carregant, setCarregant] = useState(true)
   const [error, setError] = useState(null)
@@ -240,30 +240,41 @@ function IncidenciaAssignada({ incidenciaId, latActual, lonActual, onVeureDetall
         </p>
       )}
 
-      {/* ─── Botons d'acció ────────────────────────── */}
-      <div className="grid grid-cols-2 gap-2">
+            {/* ─── Botons d'acció ────────────────────────── */}
+      <div className="grid grid-cols-3 gap-2">
         {/* Botó Navegar */}
         <button
           onClick={obrirNavegacio}
           disabled={!latActual || !lonActual}
           className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700
                      disabled:cursor-not-allowed text-white font-semibold
-                     rounded-xl py-3 transition-colors flex items-center
-                     justify-center gap-2"
+                     rounded-xl py-3 transition-colors flex flex-col items-center
+                     justify-center gap-1"
         >
-          <span>🗺️</span>
-          <span>Navegar</span>
+          <span className="text-xl">🗺️</span>
+          <span className="text-xs">Navegar</span>
         </button>
 
-        {/* Botó Veure detalls */}
+        {/* Botó Detalls + Chat */}
         <button
           onClick={() => onVeureDetalls && onVeureDetalls(incidencia)}
           className="bg-gray-600 hover:bg-gray-500 text-white font-semibold
-                     rounded-xl py-3 transition-colors flex items-center
-                     justify-center gap-2"
+                     rounded-xl py-3 transition-colors flex flex-col items-center
+                     justify-center gap-1"
         >
-          <span>📋</span>
-          <span>Detalls</span>
+          <span className="text-xl">💬</span>
+          <span className="text-xs">Detalls</span>
+        </button>
+
+        {/* Botó Finalitzar */}
+        <button
+          onClick={() => onFinalitzar && onFinalitzar()}
+          className="bg-orange-600 hover:bg-orange-700 text-white font-semibold
+                     rounded-xl py-3 transition-colors flex flex-col items-center
+                     justify-center gap-1"
+        >
+          <span className="text-xl">✅</span>
+          <span className="text-xs">Finalitzar</span>
         </button>
       </div>
 

@@ -149,6 +149,7 @@ function Dashboard() {
             latActual={lat}
             lonActual={lon}
             onVeureDetalls={() => navigate('/detall-incidencia')}
+            onFinalitzar={() => navigate('/finalitzar')}
           />
         ) : (
           <div className="bg-gray-800 rounded-2xl p-6 text-center">

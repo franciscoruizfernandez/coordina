@@ -70,6 +70,14 @@ export const getIncidencia = async (id) => {
 
 // ─── ASSIGNACIONS ───────────────────────────────────────────
 
+// Obtenir l'assignació activa d'un indicatiu
+// Busquem per la incidència assignada i filtrem la que no estigui finalitzada
+export const getAssignacioActivaPerIndicatiu = async (indicatiuId) => {
+  // Fem servir l'endpoint d'indicatiu per obtenir la incidència assignada
+  const response = await api.get(`/indicatius/${indicatiuId}`)
+  return response.data
+}
+
 export const acceptarAssignacio = async (id) => {
   const response = await api.patch(`/assignacions/${id}/acceptar`)
   return response.data

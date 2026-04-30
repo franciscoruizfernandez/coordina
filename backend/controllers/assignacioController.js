@@ -423,3 +423,46 @@ export const cancellarAssignacio = async (req, res, next) => {
     next(error);
   }
 };
+
+// ==============================================================
+// GET /api/assignacions/activa
+// Obtenir l'assignació activa d'una incidència
+// Accessible: tots els rols autenticats
+// ==============================================================
+export const obtenirAssignacioActiva = async (req, res, next) => {
+  try {
+    const { incidencia_id, indicatiu_id } = req.query;
+
+    if (!incidencia_id) {
+      return res.status(400).json({
+        error: true,
+        missatge: 'El paràmetre incidencia_id és obligatori',
+      });
+    }
+
+    const assignacio = await Assignacio.trobarActivaPerIncidencia(incidencia_id);
+
+    if (!assignacio) {
+      return res.status(404).json({
+        error: true,
+        missatge: 'No s\'ha trobat cap assignació activa per aquesta incidència',
+      });
+    }
+
+    // Si s'ha passat indicatiu_id, verificar que coincideix
+    if (indicatiu_id && assignacio.indicatiu_id !== indicatiu_id) {
+      return res.status(404).json({
+        error: true,
+        missatge: 'No s\'ha trobat cap assignació activa per aquest indicatiu i incidència',
+      });
+    }
+
+    res.json({
+      exit: true,
+      dades: assignacio,
+    });
+  } catch (error) {
+    console.error('❌ Error obtenint assignació activa:', error);
+    next(error);
+  }
+};
