@@ -148,10 +148,7 @@ function Dashboard() {
             incidenciaId={indicatiu.incidencia_assignada_id}
             latActual={lat}
             lonActual={lon}
-            onVeureDetalls={(incidencia) => {
-              console.log('Veure detalls de:', incidencia.id)
-              // Navegarem a la pantalla de detalls a la US-048
-            }}
+            onVeureDetalls={() => navigate('/detall-incidencia')}
           />
         ) : (
           <div className="bg-gray-800 rounded-2xl p-6 text-center">

@@ -124,4 +124,11 @@ export const alliberarIndicatiu = async (motiuFi = 'logout') => {
   return response.data
 }
 
+// ─── HISTORIAL D'INCIDÈNCIA ─────────────────────────────────
+
+export const getHistorialIncidencia = async (id) => {
+  const response = await api.get(`/incidencies/${id}/historial`)
+  return response.data
+}
+
 export default api

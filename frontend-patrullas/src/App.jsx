@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Login from './pages/Login'
 import SeleccioIndicatiu from './pages/SeleccioIndicatiu'
 import Dashboard from './pages/Dashboard'
+import DetallIncidencia from './pages/DetallIncidencia'
 
 function App() {
   return (
@@ -33,6 +34,16 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Ruta protegida: Detall d'incidència */}
+            <Route
+              path="/detall-incidencia"
+              element={
+                <ProtectedRoute>
+                  <DetallIncidencia />
                 </ProtectedRoute>
               }
             />
