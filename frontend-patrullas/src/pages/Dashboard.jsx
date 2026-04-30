@@ -7,6 +7,7 @@ import { alliberarIndicatiu } from '../services/api'
 import useEnviarGPS from '../hooks/useEnviarGPS'
 import BotonsEstat from '../components/BotonsEstat'
 import IncidenciaAssignada from '../components/IncidenciaAssignada'
+import useAssignacions from '../hooks/useAssignacions'
 
 function Dashboard() {
   const { usuari, indicatiu, dispatch } = useContext(AuthContext)
@@ -23,6 +24,9 @@ function Dashboard() {
     demanarPermis,
     connectat,
   } = useEnviarGPS()
+
+    // ─── Hook que escolta assignacions en temps real ─────────────
+  useAssignacions()
 
   // ─── Logout amb alliberament d'indicatiu ─────────────────────
   const handleLogout = async () => {
