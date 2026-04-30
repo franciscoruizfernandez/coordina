@@ -94,4 +94,34 @@ export const getMissatges = async (incidencia_id) => {
   return response.data
 }
 
+// ─── SELECCIÓ D'INDICATIU ───────────────────────────────────
+
+// Obtenir l'indicatiu seleccionat per l'usuari actual
+export const getSeleccioActual = async () => {
+  const response = await api.get('/indicatius/seleccio/actual')
+  return response.data
+}
+
+// Llistar indicatius disponibles per seleccionar
+export const getIndicatiusSeleccionables = async () => {
+  const response = await api.get('/indicatius/seleccionables')
+  return response.data
+}
+
+// Seleccionar un indicatiu
+export const seleccionarIndicatiu = async (indicatiuId) => {
+  const response = await api.post('/indicatius/seleccio', {
+    indicatiu_id: indicatiuId,
+  })
+  return response.data
+}
+
+// Alliberar l'indicatiu actual
+export const alliberarIndicatiu = async (motiuFi = 'logout') => {
+  const response = await api.delete('/indicatius/seleccio', {
+    data: { motiu_fi: motiuFi },
+  })
+  return response.data
+}
+
 export default api

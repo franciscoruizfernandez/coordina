@@ -4,7 +4,7 @@ import { useState, useContext, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
 import api from '../services/api'
-import { getIndicatiuPerCodi } from '../services/api'
+import { getSeleccioActual } from '../services/api'
 
 function Login() {
   const { token, dispatch } = useContext(AuthContext)
@@ -15,7 +15,7 @@ function Login() {
   const [error, setError] = useState('')
   const [carregant, setCarregant] = useState(false)
 
-  // Si ja està autenticat, redirigir al dashboard
+  // Si ja està autenticat, redirigir
   useEffect(() => {
     if (token) {
       navigate('/')
@@ -49,66 +49,55 @@ function Login() {
         return
       }
 
-      // ─── 3. Buscar l'indicatiu associat ───────────────
-      // El username de la patrulla conté el codi (ex: "patrulla101")
-      // Intentem buscar l'indicatiu pel codi de patrulla
-      // Per exemple: username "patrulla101" → codi indicatiu "A101" o similar
-      // Busquem tots els indicatius i trobem el que correspon
-
-      // Primer guardem el token per poder fer la crida autenticada
+      // ─── 3. Guardar token i usuari ────────────────────
       localStorage.setItem('token', jwtToken)
+      localStorage.setItem('usuari', JSON.stringify(usuari))
 
-      let indicatiu = null
+      // ─── 4. Comprovar si ja té un indicatiu seleccionat
       try {
-        // Intentem obtenir tots els indicatius i buscar per qualsevol criteri
-        const resIndicatius = await api.get('/indicatius')
-        const indicatius = resIndicatius.data.dades
+        const resSeleccio = await getSeleccioActual()
 
-        // Busquem un indicatiu que tingui relació amb aquest usuari
-        // Si no trobem cap match, la patrulla haurà de funcionar sense indicatiu
-        // i el podrà configurar després
-        if (indicatius && indicatius.length > 0) {
-          // Opció 1: Buscar per un codi que contingui part del username
-          indicatiu = indicatius.find((ind) => {
-            const codiNormalitzat = ind.codi.toLowerCase().replace(/[-_\s]/g, '')
-            const usernameNormalitzat = username.toLowerCase().replace(/[-_\s]/g, '')
-            return (
-              usernameNormalitzat.includes(codiNormalitzat) ||
-              codiNormalitzat.includes(usernameNormalitzat)
-            )
+        if (resSeleccio.teSeleccio && resSeleccio.dades) {
+          // Ja té indicatiu, el guardem
+          const indicatiu = {
+            id: resSeleccio.dades.indicatiu_id,
+            codi: resSeleccio.dades.codi,
+            tipus_unitat: resSeleccio.dades.tipus_unitat,
+            estat_operatiu: resSeleccio.dades.estat_operatiu,
+            ubicacio_lat: resSeleccio.dades.ubicacio_lat,
+            ubicacio_lon: resSeleccio.dades.ubicacio_lon,
+            sector_assignat: resSeleccio.dades.sector_assignat,
+            incidencia_assignada_id: resSeleccio.dades.incidencia_assignada_id,
+          }
+
+          localStorage.setItem('indicatiu', JSON.stringify(indicatiu))
+
+          dispatch({
+            type: 'LOGIN',
+            payload: { token: jwtToken, usuari, indicatiu },
           })
 
-          // Opció 2: Si no trobem match, agafem el primer disponible
-          if (!indicatiu) {
-            indicatiu = indicatius[0]
-            console.warn(
-              `⚠️ No s'ha trobat indicatiu per "${username}". S'ha assignat ${indicatiu.codi} per defecte.`
-            )
-          }
+          navigate('/')
+        } else {
+          // No té indicatiu, ha d'anar a seleccionar-ne un
+          dispatch({
+            type: 'LOGIN',
+            payload: { token: jwtToken, usuari, indicatiu: null },
+          })
+
+          navigate('/seleccio-indicatiu')
         }
-      } catch (err) {
-        console.error('⚠️ Error buscant indicatiu:', err.message)
-        // Continuem sense indicatiu, no és crític per al login
+      } catch (errSeleccio) {
+        console.error('⚠️ Error comprovant selecció:', errSeleccio)
+        // Si falla la comprovació, deixem que triï indicatiu
+        dispatch({
+          type: 'LOGIN',
+          payload: { token: jwtToken, usuari, indicatiu: null },
+        })
+
+        navigate('/seleccio-indicatiu')
       }
 
-      // ─── 4. Guardar tot a localStorage ────────────────
-      localStorage.setItem('usuari', JSON.stringify(usuari))
-      if (indicatiu) {
-        localStorage.setItem('indicatiu', JSON.stringify(indicatiu))
-      }
-
-      // ─── 5. Actualitzar context ───────────────────────
-      dispatch({
-        type: 'LOGIN',
-        payload: {
-          token: jwtToken,
-          usuari,
-          indicatiu,
-        },
-      })
-
-      // ─── 6. Redirigir al dashboard ────────────────────
-      navigate('/')
     } catch (err) {
       console.error('❌ Error de login:', err)
 
@@ -120,7 +109,6 @@ function Login() {
         setError('Error de connexió amb el servidor')
       }
 
-      // Si ha fallat, netejem el token que hem guardat
       localStorage.removeItem('token')
     } finally {
       setCarregant(false)
@@ -142,7 +130,7 @@ function Login() {
           {/* Camp username */}
           <div className="mb-4">
             <label className="block text-gray-400 text-sm mb-2">
-              Codi de patrulla
+              Usuari
             </label>
             <input
               type="text"
