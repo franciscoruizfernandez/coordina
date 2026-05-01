@@ -327,6 +327,7 @@ export const acceptarAssignacio = async (req, res, next) => {
 export const finalitzarAssignacio = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const { observacions } = req.body;
 
     const assignacio = await Assignacio.trobarPerId(id);
     if (!assignacio) {
@@ -344,21 +345,20 @@ export const finalitzarAssignacio = async (req, res, next) => {
     }
 
     await Assignacio.finalitzar(id);
-
-    // Alliberar l'indicatiu (tornar a disponible)
     await Indicatiu.desassignarIncidencia(assignacio.indicatiu_id);
 
-    // Canviar estat incidència a "resolta"
-    await Incidencia.canviarEstat(assignacio.incidencia_id, 'resolta');
+    await Incidencia.canviarEstat(assignacio.incidencia_id, 'resolta', observacions || null);
 
-    // ✅ US014: Traçabilitat
     await registrarEsdeveniment(
       'assignacio_finalitzada',
       req.usuari?.userId,
       assignacio.incidencia_id,
       assignacio.indicatiu_id,
       `Assignació finalitzada. Indicatiu ${assignacio.indicatiu_codi} alliberat.`,
-      { indicatiu_codi: assignacio.indicatiu_codi }
+      {
+        indicatiu_codi: assignacio.indicatiu_codi,
+        observacions: observacions || null,
+      }
     );
 
     res.json({
@@ -420,6 +420,49 @@ export const cancellarAssignacio = async (req, res, next) => {
     });
   } catch (error) {
     console.error('❌ Error cancel·lant assignació:', error);
+    next(error);
+  }
+};
+
+// ==============================================================
+// GET /api/assignacions/activa
+// Obtenir l'assignació activa d'una incidència
+// Accessible: tots els rols autenticats
+// ==============================================================
+export const obtenirAssignacioActiva = async (req, res, next) => {
+  try {
+    const { incidencia_id, indicatiu_id } = req.query;
+
+    if (!incidencia_id) {
+      return res.status(400).json({
+        error: true,
+        missatge: 'El paràmetre incidencia_id és obligatori',
+      });
+    }
+
+    const assignacio = await Assignacio.trobarActivaPerIncidencia(incidencia_id);
+
+    if (!assignacio) {
+      return res.status(404).json({
+        error: true,
+        missatge: 'No s\'ha trobat cap assignació activa per aquesta incidència',
+      });
+    }
+
+    // Si s'ha passat indicatiu_id, verificar que coincideix
+    if (indicatiu_id && assignacio.indicatiu_id !== indicatiu_id) {
+      return res.status(404).json({
+        error: true,
+        missatge: 'No s\'ha trobat cap assignació activa per aquest indicatiu i incidència',
+      });
+    }
+
+    res.json({
+      exit: true,
+      dades: assignacio,
+    });
+  } catch (error) {
+    console.error('❌ Error obtenint assignació activa:', error);
     next(error);
   }
 };

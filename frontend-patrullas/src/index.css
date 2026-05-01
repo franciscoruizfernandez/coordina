@@ -1,3 +1,8 @@
+/* frontend-patrulles/src/index.css */
+
+/* Estils de Leaflet */
+@import 'leaflet/dist/leaflet.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

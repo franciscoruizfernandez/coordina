@@ -7,6 +7,7 @@ import {
   acceptarAssignacio,
   finalitzarAssignacio,
   cancellarAssignacio,
+  obtenirAssignacioActiva,
 } from '../controllers/assignacioController.js';
 import { verificarAuth } from '../middleware/authMiddleware.js';
 import {
@@ -21,8 +22,10 @@ router.use(verificarAuth);
 
 // ==============================================================
 // RUTES D'ASSIGNACIONS
-// US013: API d'assignacions
 // ==============================================================
+
+// GET /api/assignacions/activa - Obtenir assignació activa
+router.get('/activa', qualsevolRol, obtenirAssignacioActiva);
 
 // POST /api/assignacions - Assignació manual
 router.post('/', nomesSiOperadorOAdmin, crearAssignacioManual);

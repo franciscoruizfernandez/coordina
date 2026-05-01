@@ -2,6 +2,7 @@
 
 import Indicatiu, { TIPUS_UNITAT, ESTATS_OPERATIUS } from '../models/Indicatiu.js';
 import EsdevenimentTracabilitat from '../models/EsdevenimentTracabilitat.js';
+import OcupacioIndicatiuActiva from '../models/OcupacioIndicatiuActiva.js';
 import {
   emetreUbicacioIndicatiu,
   emetreCanviEstatIndicatiu,
@@ -350,6 +351,167 @@ export const obtenirHistorialIndicatiu = async (req, res, next) => {
     });
   } catch (error) {
     console.error('❌ Error obtenint historial indicatiu:', error);
+    next(error);
+  }
+};
+
+// ==============================================================
+// GET /api/indicatius/seleccio/actual
+// Obtenir l'indicatiu seleccionat per l'usuari actual
+// Accessible: patrulla
+// ==============================================================
+export const obtenirSeleccioActual = async (req, res, next) => {
+  try {
+    const usuariId = req.usuari.userId;
+
+    const ocupacio = await OcupacioIndicatiuActiva.trobarPerUsuari(usuariId);
+
+    if (!ocupacio) {
+      return res.json({
+        exit: true,
+        teSeleccio: false,
+        dades: null,
+      });
+    }
+
+    res.json({
+      exit: true,
+      teSeleccio: true,
+      dades: {
+        indicatiu_id: ocupacio.indicatiu_id,
+        codi: ocupacio.indicatiu_codi,
+        tipus_unitat: ocupacio.tipus_unitat,
+        estat_operatiu: ocupacio.estat_operatiu,
+        ubicacio_lat: ocupacio.ubicacio_lat,
+        ubicacio_lon: ocupacio.ubicacio_lon,
+        sector_assignat: ocupacio.sector_assignat,
+        incidencia_assignada_id: ocupacio.incidencia_assignada_id,
+        timestamp_inici: ocupacio.timestamp_inici,
+      },
+    });
+  } catch (error) {
+    console.error('❌ Error obtenint selecció actual:', error);
+    next(error);
+  }
+};
+
+// ==============================================================
+// GET /api/indicatius/seleccionables
+// Llistar indicatius disponibles per seleccionar
+// Accessible: patrulla
+// ==============================================================
+export const llistarSeleccionables = async (req, res, next) => {
+  try {
+    const indicatius = await OcupacioIndicatiuActiva.llistarSeleccionables();
+
+    res.json({
+      exit: true,
+      total: indicatius.length,
+      dades: indicatius,
+    });
+  } catch (error) {
+    console.error('❌ Error llistant seleccionables:', error);
+    next(error);
+  }
+};
+
+// ==============================================================
+// POST /api/indicatius/seleccio
+// Seleccionar un indicatiu
+// Accessible: patrulla
+// ==============================================================
+export const seleccionarIndicatiu = async (req, res, next) => {
+  try {
+    const usuariId = req.usuari.userId;
+    const { indicatiu_id } = req.body;
+
+    // Validar camp obligatori
+    if (!indicatiu_id) {
+      return res.status(400).json({
+        error: true,
+        missatge: 'El camp indicatiu_id és obligatori',
+      });
+    }
+
+    // Verificar que l'indicatiu existeix
+    const indicatiu = await Indicatiu.trobarPerId(indicatiu_id);
+    if (!indicatiu) {
+      return res.status(404).json({
+        error: true,
+        missatge: 'Indicatiu no trobat',
+      });
+    }
+
+    // Intentar seleccionar
+    const resultat = await OcupacioIndicatiuActiva.seleccionar(usuariId, indicatiu_id);
+
+    if (resultat.error) {
+      return res.status(400).json({
+        error: true,
+        missatge: resultat.missatge,
+      });
+    }
+
+    // Registrar traçabilitat
+    await registrarEsdeveniment(
+      'seleccio_indicatiu',
+      usuariId,
+      null,
+      indicatiu_id,
+      `Usuari ha seleccionat l'indicatiu ${indicatiu.codi}`,
+      { indicatiu_codi: indicatiu.codi }
+    );
+
+    res.status(201).json({
+      exit: true,
+      missatge: `Indicatiu ${indicatiu.codi} seleccionat correctament`,
+      dades: resultat.dades,
+    });
+  } catch (error) {
+    console.error('❌ Error seleccionant indicatiu:', error);
+    next(error);
+  }
+};
+
+// ==============================================================
+// DELETE /api/indicatius/seleccio
+// Alliberar l'indicatiu seleccionat
+// Accessible: patrulla
+// ==============================================================
+export const alliberarIndicatiu = async (req, res, next) => {
+  try {
+    const usuariId = req.usuari.userId;
+    const { motiu_fi } = req.body; // opcional: 'logout', 'canvi_indicatiu', etc.
+
+    const resultat = await OcupacioIndicatiuActiva.alliberar(
+      usuariId,
+      motiu_fi || 'logout'
+    );
+
+    if (resultat.error) {
+      return res.status(400).json({
+        error: true,
+        missatge: resultat.missatge,
+      });
+    }
+
+    // Registrar traçabilitat
+    await registrarEsdeveniment(
+      'alliberament_indicatiu',
+      usuariId,
+      null,
+      resultat.dades.indicatiu_id,
+      `Usuari ha alliberat l'indicatiu. Motiu: ${motiu_fi || 'logout'}`,
+      { motiu_fi: motiu_fi || 'logout' }
+    );
+
+    res.json({
+      exit: true,
+      missatge: 'Indicatiu alliberat correctament',
+      dades: resultat.dades,
+    });
+  } catch (error) {
+    console.error('❌ Error alliberant indicatiu:', error);
     next(error);
   }
 };
