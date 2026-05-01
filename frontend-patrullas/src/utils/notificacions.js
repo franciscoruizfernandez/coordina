@@ -1,4 +1,5 @@
 // frontend-patrulles/src/utils/notificacions.js
+import { llegirPreferencia } from '../pages/Configuracio'
 
 // ==============================================================
 // SOL·LICITAR PERMÍS DE NOTIFICACIÓ
@@ -97,16 +98,24 @@ export function alertarAssignacio(incidencia, indicatiu) {
   const prioritat = incidencia?.prioritat?.toUpperCase() || ''
   const direccio = incidencia?.direccio || 'Ubicació desconeguda'
 
-  // 1. Notificació nativa
+  // Llegir preferències de l'usuari
+  const soActiu = llegirPreferencia('config_so_actiu', true)
+  const vibracioActiva = llegirPreferencia('config_vibracio_activa', true)
+
+  // 1. Notificació nativa (sempre si hi ha permís)
   mostrarNotificacio(`🚨 Nova assignació - ${prioritat}`, {
     body: `${tipologia}\n📍 ${direccio}`,
-    tag: 'assignacio-nova', // Evita duplicats
-    requireInteraction: true, // No es tanca sola en mòbil
+    tag: 'assignacio-nova',
+    requireInteraction: true,
   })
 
-  // 2. Vibrar
-  vibrar()
+  // 2. Vibrar (si l'usuari ho té activat)
+  if (vibracioActiva) {
+    vibrar()
+  }
 
-  // 3. So
-  reproduirSoAlerta()
+  // 3. So (si l'usuari ho té activat)
+  if (soActiu) {
+    reproduirSoAlerta()
+  }
 }

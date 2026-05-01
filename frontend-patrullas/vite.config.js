@@ -11,6 +11,7 @@ export default defineConfig({
 
       devOptions: {
         enabled: true,
+        disableDevLogs: true,
       },
 
       manifest: {

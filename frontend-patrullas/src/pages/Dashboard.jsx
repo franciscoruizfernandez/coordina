@@ -53,7 +53,6 @@ function Dashboard() {
       <div className="bg-gray-800 rounded-2xl p-4 mb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* Icona segons tipus d'unitat */}
             <div className="text-3xl">
               {indicatiu?.tipus_unitat === 'cotxe' && '🚔'}
               {indicatiu?.tipus_unitat === 'moto' && '🏍️'}
@@ -69,15 +68,26 @@ function Dashboard() {
               </p>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            disabled={tancantSessio}
-            className="bg-red-600 hover:bg-red-700 disabled:bg-red-800
-                       disabled:cursor-not-allowed text-white text-sm
-                       rounded-xl px-4 py-2 transition-colors"
-          >
-            {tancantSessio ? 'Sortint...' : 'Sortir'}
-          </button>
+
+          {/* Botons capçalera */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => navigate('/configuracio')}
+              className="bg-gray-700 hover:bg-gray-600 text-white text-sm
+                         rounded-xl px-3 py-2 transition-colors"
+            >
+              ⚙️
+            </button>
+            <button
+              onClick={handleLogout}
+              disabled={tancantSessio}
+              className="bg-red-600 hover:bg-red-700 disabled:bg-red-800
+                         disabled:cursor-not-allowed text-white text-sm
+                         rounded-xl px-4 py-2 transition-colors"
+            >
+              {tancantSessio ? 'Sortint...' : 'Sortir'}
+            </button>
+          </div>
         </div>
       </div>
 

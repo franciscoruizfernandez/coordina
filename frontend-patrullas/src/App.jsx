@@ -10,16 +10,13 @@ import Dashboard from './pages/Dashboard'
 import DetallIncidencia from './pages/DetallIncidencia'
 import FinalitzarServei from './pages/FinalitzarServei'
 import ActualitzacioSW from './components/ActualitzacioSW'
+import Configuracio from './pages/Configuracio'
 
 function App() {
   return (
     <AuthProvider>
       <SocketProvider>
         <BrowserRouter>
-          future={{
-            v7_startTransition: true,
-            v7_relativeSplatPath: true,
-          }}
           <Routes>
             {/* Ruta pública: Login */}
             <Route path="/login" element={<Login />} />
@@ -60,6 +57,16 @@ function App() {
               element={
                 <ProtectedRoute>
                   <FinalitzarServei />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Ruta protegida: Configuració */}
+            <Route
+              path="/configuracio"
+              element={
+                <ProtectedRoute>
+                  <Configuracio />
                 </ProtectedRoute>
               }
             />
