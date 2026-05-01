@@ -68,6 +68,7 @@ export const canviarEstatIncidencia = async (id, estat) => {
   return response.data;
 };
 
+
 // ================= INDICATIUS =================
 
 export const getIndicatius = async () => {
@@ -75,10 +76,28 @@ export const getIndicatius = async () => {
   return response.data;
 };
 
+export const getIndicatiu = async (id) => {
+  const response = await api.get(`/indicatius/${id}`);
+  return response.data;
+};
+
 export const getIndicatiusDisponibles = async () => {
   const response = await api.get("/indicatius/disponibles");
   return response.data;
 };
+
+export const getHistorialIndicatiu = async (id) => {
+  const response = await api.get(`/indicatius/${id}/historial`);
+  return response.data;
+};
+
+export const canviarEstatIndicatiu = async (id, estat_operatiu) => {
+  const response = await api.patch(`/indicatius/${id}/estat`, {
+    estat_operatiu,
+  });
+  return response.data;
+};
+
 
 // ================= ASSIGNACIONS =================
 
