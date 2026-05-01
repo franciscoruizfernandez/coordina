@@ -8,6 +8,7 @@ import useEnviarGPS from '../hooks/useEnviarGPS'
 import BotonsEstat from '../components/BotonsEstat'
 import IncidenciaAssignada from '../components/IncidenciaAssignada'
 import useAssignacions from '../hooks/useAssignacions'
+import MapaPosicioActual from '../components/MapaPosicioActual'
 
 function Dashboard() {
   const { usuari, indicatiu, dispatch } = useContext(AuthContext)
@@ -172,31 +173,70 @@ function Dashboard() {
         )}
       </div>
 
-      {/* ─── Posició actual ────────────────────────── */}
-      {lat && lon && (
-        <div className="bg-gray-800 rounded-2xl p-4">
-          <h2 className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-3">
-            Posició actual
-          </h2>
-          <div className="space-y-1">
-            <div className="flex justify-between">
-              <span className="text-gray-400 text-sm">Latitud</span>
-              <span className="text-white text-sm font-mono">{lat.toFixed(6)}°</span>
+            {/* ─── Posició actual ────────────────────────── */}
+      <div className="bg-gray-800 rounded-2xl p-4">
+        <h2 className="text-gray-400 text-xs font-medium uppercase tracking-wider mb-3">
+          Posició actual
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+          {/* Columna esquerra: informació GPS */}
+          <div className="space-y-3">
+            <div className="bg-gray-700 rounded-xl p-3">
+              <div className="flex justify-between mb-2">
+                <span className="text-gray-400 text-sm">Latitud</span>
+                <span className="text-white text-sm font-mono">
+                  {lat != null ? `${lat.toFixed(6)}°` : '—'}
+                </span>
+              </div>
+
+              <div className="flex justify-between mb-2">
+                <span className="text-gray-400 text-sm">Longitud</span>
+                <span className="text-white text-sm font-mono">
+                  {lon != null ? `${lon.toFixed(6)}°` : '—'}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-gray-400 text-sm">Precisió</span>
+                <span className="text-white text-sm font-mono">
+                  {accuracy != null ? `±${accuracy} m` : '—'}
+                </span>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400 text-sm">Longitud</span>
-              <span className="text-white text-sm font-mono">{lon.toFixed(6)}°</span>
+
+            <div className="bg-gray-700 rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`w-2.5 h-2.5 rounded-full ${
+                  lat != null && lon != null
+                    ? 'bg-green-400 animate-pulse'
+                    : 'bg-yellow-400 animate-pulse'
+                }`} />
+                <span className="text-white text-sm font-medium">
+                  {lat != null && lon != null ? 'Posició disponible' : 'Esperant GPS'}
+                </span>
+              </div>
+
+              <p className="text-gray-400 text-xs">
+                El mapa es recentra automàticament quan canvia la teva ubicació.
+              </p>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400 text-sm">Precisió</span>
-              <span className="text-white text-sm font-mono">±{accuracy} m</span>
-            </div>
+
+            <p className="text-gray-600 text-xs">
+              📡 S'envia automàticament cada 10 segons a la sala de control
+            </p>
           </div>
-          <p className="text-gray-600 text-xs mt-3">
-            📡 S'envia automàticament cada 10 segons
-          </p>
+
+          {/* Columna dreta: mapa */}
+          <div>
+            <MapaPosicioActual
+              lat={lat}
+              lon={lon}
+              accuracy={accuracy}
+            />
+          </div>
         </div>
-      )}
+      </div>
 
     </div>
   )
