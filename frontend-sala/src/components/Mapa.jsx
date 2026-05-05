@@ -5,13 +5,16 @@ import {
   ScaleControl,
 } from "react-leaflet";
 import MarcadorIncidencia from "./MarcadorIncidencia";
-import MarcadorIndicatiu from "./MarcadorIndicatiu"; // ✅ Nou
+import MarcadorIndicatiu from "./MarcadorIndicatiu";
 import "leaflet/dist/leaflet.css";
 
 function Mapa({
   incidencies = [],
-  indicatius = [], // ✅ Nou
+  indicatius = [],
   onSeleccionarIncidencia,
+  onSeleccionarIndicatiu,      
+  incidenciaSeleccionada = null, 
+  indicatiuSeleccionat = null,   
 }) {
   const centre = [41.60, 2.30];
   const zoomInicial = 10;
@@ -34,20 +37,23 @@ function Mapa({
       <ZoomControl position="topright" />
       <ScaleControl position="bottomleft" imperial={false} />
 
-      {/* ✅ Incidències */}
+      {/* Incidències */}
       {incidencies.map((incidencia) => (
         <MarcadorIncidencia
           key={incidencia.id}
           incidencia={incidencia}
           onSeleccionar={onSeleccionarIncidencia}
+          seleccionat={incidenciaSeleccionada?.id === incidencia.id}
         />
       ))}
 
-      {/* ✅ Indicatius */}
+      {/* Indicatius */}
       {indicatius.map((indicatiu) => (
         <MarcadorIndicatiu
           key={indicatiu.id}
           indicatiu={indicatiu}
+          onSeleccionar={onSeleccionarIndicatiu}                  
+          seleccionat={indicatiuSeleccionat?.id === indicatiu.id}   
         />
       ))}
     </MapContainer>
