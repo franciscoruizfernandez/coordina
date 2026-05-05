@@ -1,4 +1,3 @@
-// src/pages/Dashboard.jsx
 import { useState, useEffect, useContext } from 'react';
 import { toast } from 'react-toastify';
 import Mapa from '../components/Mapa';
@@ -6,6 +5,7 @@ import { getIncidencies, getIndicatius } from '../services/api';
 import { SocketContext } from '../context/SocketContext';
 import LlistaIncidencies from '../components/LlistaIncidencies';
 import DetallIncidencia from '../components/DetallIncidencia';
+import DetallIndicatiu from '../components/DetallIndicatiu';
 import {
   reproduirAlertaCritica,
   reproduirNotificacioInfo,
@@ -14,15 +14,13 @@ import {
 function Dashboard() {
   const { socket } = useContext(SocketContext);
 
-  const [incidencies, setIncidencies]                       = useState([]);
-  const [indicatius, setIndicatius]                         = useState([]);
+  const [incidencies, setIncidencies] = useState([]);
+  const [indicatius, setIndicatius] = useState([]);
   const [incidenciaSeleccionada, setIncidenciaSeleccionada] = useState(null);
-  const [carregant, setCarregant]                           = useState(true);
-  const [error, setError]                                   = useState(null);
+  const [indicatiuSeleccionat, setIndicatiuSeleccionat] = useState(null);
+  const [carregant, setCarregant] = useState(true);
+  const [error, setError] = useState(null);
 
-  // ===============================
-  // CÀRREGA INICIAL DE DADES
-  // ===============================
   useEffect(() => {
     async function carregar() {
       try {
@@ -45,36 +43,29 @@ function Dashboard() {
     carregar();
   }, []);
 
-  // ===============================
-  // WEBSOCKET TEMPS REAL
-  // ===============================
   useEffect(() => {
     if (!socket) return;
 
-    // ── Nova incidència rebuda ──
     socket.on('nova_incidencia', (data) => {
       const inc = data.incidencia;
       setIncidencies((prev) => [...prev, inc]);
 
       if (inc.prioritat === 'critica') {
-        // Incidència crítica → toast d'error (vermell) + so triple
         toast.error(
           `🚨 INCIDÈNCIA CRÍTICA: ${inc.tipologia?.toUpperCase()}${inc.direccio ? ` — ${inc.direccio}` : ''}`,
           {
-            autoClose: 8000,      // 8 segons (més temps per a crítiques)
-            closeOnClick: false,  // No tancar accidentalment
+            autoClose: 8000,
+            closeOnClick: false,
           }
         );
         reproduirAlertaCritica();
       } else if (inc.prioritat === 'alta') {
-        // Alta → toast d'avís (taronja) + so suau
         toast.warning(
           `⚠️ Nova incidència ALTA: ${inc.tipologia}${inc.direccio ? ` — ${inc.direccio}` : ''}`,
           { autoClose: 6000 }
         );
         reproduirNotificacioInfo();
       } else {
-        // Mitjana / baixa → toast informatiu (blau)
         toast.info(
           `📋 Nova incidència: ${inc.tipologia}${inc.direccio ? ` — ${inc.direccio}` : ''}`,
           { autoClose: 4000 }
@@ -82,17 +73,18 @@ function Dashboard() {
       }
     });
 
-    // ── Actualització GPS d'indicatiu ──
     socket.on('ubicacio_indicatiu', (data) => {
       setIndicatius((prev) =>
         prev.map((ind) =>
           ind.id === data.indicatiu.id ? { ...ind, ...data.indicatiu } : ind
         )
       );
-      // Nota: no fem toast aquí perquè és molt freqüent (cada 10s per patrulla)
+
+      setIndicatiuSeleccionat((prev) =>
+        prev?.id === data.indicatiu.id ? { ...prev, ...data.indicatiu } : prev
+      );
     });
 
-    // ── Canvi d'estat d'incidència ──
     socket.on('canvi_estat_incidencia', (data) => {
       setIncidencies((prev) =>
         prev.map((inc) =>
@@ -101,6 +93,7 @@ function Dashboard() {
             : inc
         )
       );
+
       setIncidenciaSeleccionada((prev) =>
         prev?.id === data.incidencia_id
           ? { ...prev, estat: data.estat_nou }
@@ -108,7 +101,6 @@ function Dashboard() {
       );
     });
 
-    // ── Canvi d'estat d'indicatiu ──
     socket.on('canvi_estat_indicatiu', (data) => {
       setIndicatius((prev) =>
         prev.map((ind) =>
@@ -117,8 +109,13 @@ function Dashboard() {
             : ind
         )
       );
-    });
 
+      setIndicatiuSeleccionat((prev) =>
+        prev?.id === data.indicatiu_id
+          ? { ...prev, estat_operatiu: data.estat_nou }
+          : prev
+      );
+    });
 
     return () => {
       socket.off('nova_incidencia');
@@ -128,21 +125,31 @@ function Dashboard() {
     };
   }, [socket]);
 
-  // ===============================
-  // CALLBACK: Sincronitzar estat local
-  // ===============================
   const handleIncidenciaActualitzada = (id, canvis) => {
     setIncidencies((prev) =>
       prev.map((inc) => (inc.id === id ? { ...inc, ...canvis } : inc))
     );
+
     setIncidenciaSeleccionada((prev) =>
       prev?.id === id ? { ...prev, ...canvis } : prev
     );
   };
 
-  // ===============================
-  // ESTATS DE CÀRREGA
-  // ===============================
+  const handleSeleccionarIncidencia = (incidencia) => {
+    setIncidenciaSeleccionada(incidencia);
+    setIndicatiuSeleccionat(null);
+  };
+
+  const handleSeleccionarIndicatiu = (indicatiu) => {
+    setIndicatiuSeleccionat(indicatiu);
+    setIncidenciaSeleccionada(null);
+  };
+
+  const handleTancarDetall = () => {
+    setIncidenciaSeleccionada(null);
+    setIndicatiuSeleccionat(null);
+  };
+
   if (carregant) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -159,40 +166,49 @@ function Dashboard() {
     );
   }
 
-  // ===============================
-  // RENDER PRINCIPAL
-  // ===============================
   return (
     <div className="flex h-screen overflow-hidden">
-
       {/* PANELL ESQUERRE */}
       <div className="w-80 bg-white border-r border-gray-200 h-full overflow-y-auto flex-shrink-0">
         <LlistaIncidencies
           incidencies={incidencies}
-          onSeleccionar={setIncidenciaSeleccionada}
+          onSeleccionar={handleSeleccionarIncidencia}
         />
       </div>
 
-      {/* PANELL CENTRAL: Mapa */}
+      {/* MAPA */}
       <div className="flex-1 h-full relative">
         <Mapa
           incidencies={incidencies}
           indicatius={indicatius}
-          onSeleccionarIncidencia={setIncidenciaSeleccionada}
+          onSeleccionarIncidencia={handleSeleccionarIncidencia}
+          onSeleccionarIndicatiu={handleSeleccionarIndicatiu}
+          incidenciaSeleccionada={incidenciaSeleccionada}
+          indicatiuSeleccionat={indicatiuSeleccionat}
         />
       </div>
 
-      {/* PANELL DRET: Detall */}
+      {/* PANELL DRET: incidència */}
       {incidenciaSeleccionada && (
         <div className="w-80 bg-white border-l border-gray-200 h-full overflow-hidden flex-shrink-0">
           <DetallIncidencia
             incidencia={incidenciaSeleccionada}
-            onTancar={() => setIncidenciaSeleccionada(null)}
+            onTancar={handleTancarDetall}
             onIncidenciaActualitzada={handleIncidenciaActualitzada}
           />
         </div>
       )}
 
+      {/* PANELL DRET: indicatiu */}
+      {indicatiuSeleccionat && !incidenciaSeleccionada && (
+        <div className="w-80 bg-white border-l border-gray-200 h-full overflow-hidden flex-shrink-0">
+          <DetallIndicatiu
+            indicatiu={indicatiuSeleccionat}
+            onTancar={handleTancarDetall}
+            onVeureIncidencia={handleSeleccionarIncidencia}
+          />
+        </div>
+      )}
     </div>
   );
 }
