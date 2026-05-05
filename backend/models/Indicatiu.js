@@ -28,7 +28,9 @@ class Indicatiu {
         inc.tipologia      AS incidencia_tipologia,
         inc.prioritat      AS incidencia_prioritat,
         inc.estat          AS incidencia_estat,
-        inc.direccio       AS incidencia_direccio
+        inc.direccio       AS incidencia_direccio,
+        inc.ubicacio_lat   AS incidencia_lat,
+        inc.ubicacio_lon   AS incidencia_lon
       FROM indicatius i
       LEFT JOIN incidencies inc ON i.incidencia_assignada_id = inc.id
       ${clausulaWhere}
