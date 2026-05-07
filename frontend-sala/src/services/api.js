@@ -140,4 +140,40 @@ export const getAssignacioActiva = async (incidencia_id) => {
   return response.data;
 };
 
+// ─── RUTES OSRM (via proxy backend) ─────────────────────────────
+
+export const obtenirRutaOSRM = async (latOrigen, lonOrigen, latDesti, lonDesti) => {
+  if (latOrigen == null || lonOrigen == null || latDesti == null || lonDesti == null) {
+    return null
+  }
+
+  try {
+    const response = await api.get('/indicatius/ruta', {
+      params: { latOrigen, lonOrigen, latDesti, lonDesti },
+    })
+
+    const dades = response.data
+
+    if (dades.code !== 'Ok' || !dades.routes || dades.routes.length === 0) {
+      return null
+    }
+
+    const ruta = dades.routes[0]
+
+    return {
+      distancia_km: Math.round((ruta.distance / 1000) * 10) / 10,
+      distancia_text: ruta.distance < 1000
+        ? `${Math.round(ruta.distance)} m`
+        : `${(ruta.distance / 1000).toFixed(1)} km`,
+      temps_minuts: Math.round(ruta.duration / 60),
+      temps_text: ruta.duration < 60
+        ? '< 1 min'
+        : `${Math.round(ruta.duration / 60)} min`,
+    }
+  } catch (error) {
+    console.error('❌ Error obtenint ruta OSRM:', error.message)
+    return null
+  }
+}
+
 export default api;
