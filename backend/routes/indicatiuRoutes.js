@@ -13,6 +13,7 @@ import {
   llistarSeleccionables,
   seleccionarIndicatiu,
   alliberarIndicatiu,
+  obtenirRutaProxy,
 } from '../controllers/indicatiuController.js';
 import { verificarAuth } from '../middleware/authMiddleware.js';
 import {
@@ -31,10 +32,7 @@ router.use(verificarAuth);
 // RUTES D'INDICATIUS
 // ==============================================================
 
-// ==============================================================
-// RUTES DE SELECCIÓ D'INDICATIU (per a patrulles)
-// IMPORTANT: Han d'anar ABANS de les rutes amb /:id
-// ==============================================================
+// ── Rutes de selecció (patrulles) ─────────────────────────────
 
 // GET /api/indicatius/seleccio/actual - Obtenir indicatiu actual de l'usuari
 router.get('/seleccio/actual', nomesSiPatrulla, obtenirSeleccioActual);
@@ -48,18 +46,25 @@ router.post('/seleccio', nomesSiPatrulla, seleccionarIndicatiu);
 // DELETE /api/indicatius/seleccio - Alliberar indicatiu
 router.delete('/seleccio', nomesSiPatrulla, alliberarIndicatiu);
 
+
+// ── Rutes fixes ────────────────────────────────────────────────
+
 // GET /api/indicatius/disponibles - Llistar disponibles
-// IMPORTANT: Aquesta ruta ha d'anar ABANS de /:id
 router.get('/disponibles', nomesSiOperadorOAdmin, llistarDisponibles);
+
+// GET /api/indicatius/ruta - Proxy OSRM per calcular rutes
+router.get('/ruta', qualsevolRol, obtenirRutaProxy);
 
 // GET /api/indicatius - Llistar tots
 router.get('/', nomesSiOperadorOAdmin, llistarIndicatius);
 
-// GET /api/indicatius/:id - Detall
-router.get('/:id', qualsevolRol, obtenirIndicatiu);
-
 // POST /api/indicatius - Crear (admin)
 router.post('/', nomesSiAdmin, crearIndicatiu);
+
+// ── Rutes amb /:id  ─────────────────────────────────────────
+
+// GET /api/indicatius/:id - Detall
+router.get('/:id', qualsevolRol, obtenirIndicatiu);
 
 // PATCH /api/indicatius/:id/ubicacio - Actualitzar GPS
 // Accessible per patrulles (enviament automàtic) i operadors
@@ -70,8 +75,6 @@ router.patch('/:id/estat', qualsevolRol, canviarEstatIndicatiu);
 
 // GET /api/indicatius/:id/historial - Historial
 router.get('/:id/historial', nomesSiOperadorOAdmin, obtenirHistorialIndicatiu);
-
-
 
 
 export default router;

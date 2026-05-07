@@ -474,6 +474,46 @@ export const seleccionarIndicatiu = async (req, res, next) => {
 };
 
 // ==============================================================
+// GET /api/indicatius/ruta
+// Proxy cap a OSRM per evitar CORS des del frontend
+// Accessible: tots els rols autenticats
+// ==============================================================
+export const obtenirRutaProxy = async (req, res, next) => {
+  try {
+    const { latOrigen, lonOrigen, latDesti, lonDesti } = req.query;
+
+    if (!latOrigen || !lonOrigen || !latDesti || !lonDesti) {
+      return res.status(400).json({
+        error: true,
+        missatge: 'Cal especificar latOrigen, lonOrigen, latDesti i lonDesti',
+      });
+    }
+
+    // OSRM espera lon,lat (al revés del habitual)
+    const url =
+      `https://router.project-osrm.org/route/v1/driving/` +
+      `${lonOrigen},${latOrigen};${lonDesti},${latDesti}` +
+      `?overview=false&steps=false`;
+
+    const resposta = await fetch(url);
+
+    if (!resposta.ok) {
+      return res.status(502).json({
+        error: true,
+        missatge: 'Error obtenint la ruta de OSRM',
+      });
+    }
+
+    const dades = await resposta.json();
+    res.json(dades);
+
+  } catch (error) {
+    console.error('❌ Error proxy OSRM:', error.message);
+    next(error);
+  }
+};
+
+// ==============================================================
 // DELETE /api/indicatius/seleccio
 // Alliberar l'indicatiu seleccionat
 // Accessible: patrulla

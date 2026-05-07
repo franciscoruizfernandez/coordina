@@ -6,6 +6,7 @@ import Indicatiu from '../models/Indicatiu.js';
 import EsdevenimentTracabilitat from '../models/EsdevenimentTracabilitat.js';
 import { trobarMesProper } from '../utils/haversine.js';
 import { emetreIncidenciaAssignada } from '../sockets/emissors.js';
+import { calcularRutesMultiples } from '../utils/osrm.js'
 
 // Helper de traçabilitat
 const registrarEsdeveniment = async (tipus, usuariId, incidenciaId, indicatiuId, descripcio, dades = {}) => {
@@ -138,41 +139,40 @@ export const crearAssignacioManual = async (req, res, next) => {
 
 // ==============================================================
 // POST /api/assignacions/automatica
-// Assignació automàtica: algoritme Haversine troba la patrulla més propera
+// Assignació automàtica: selecciona la patrulla que triga menys
+// a arribar via OSRM (temps real per carretera)
 // Accessible: operador_sala, administrador
-// US013
 // ==============================================================
 export const crearAssignacioAutomatica = async (req, res, next) => {
   try {
-    const { incidencia_id } = req.body;
+    const { incidencia_id } = req.body
 
     if (!incidencia_id) {
       return res.status(400).json({
         error: true,
         missatge: 'El camp incidencia_id és obligatori',
-      });
+      })
     }
 
     // --- Verificar incidència ---
-    const incidencia = await Incidencia.trobarPerId(incidencia_id);
+    const incidencia = await Incidencia.trobarPerId(incidencia_id)
     if (!incidencia) {
       return res.status(404).json({
         error: true,
         missatge: 'Incidència no trobada',
-      });
+      })
     }
 
-    // Només es pot assignar si està en estat 'nova'
     if (incidencia.estat !== 'nova') {
       return res.status(400).json({
         error: true,
         missatge: `No es pot assignar automàticament una incidència en estat "${incidencia.estat}". Només es poden assignar incidències en estat "nova".`,
         estatActual: incidencia.estat,
-      });
+      })
     }
 
-    // ✅ Comprovar si ja té una assignació activa
-    const assignacioActiva = await Assignacio.trobarActivaPerIncidencia(incidencia_id);
+    // --- Comprovar assignació activa ---
+    const assignacioActiva = await Assignacio.trobarActivaPerIncidencia(incidencia_id)
     if (assignacioActiva) {
       return res.status(400).json({
         error: true,
@@ -182,83 +182,120 @@ export const crearAssignacioAutomatica = async (req, res, next) => {
           indicatiu_id: assignacioActiva.indicatiu_id,
           timestamp_assignacio: assignacioActiva.timestamp_assignacio,
         },
-      });
+      })
     }
 
-    // --- Obtenir tots els indicatius disponibles ---
-    const disponibles = await Indicatiu.trobarDisponibles();
+    // --- Obtenir indicatius disponibles ---
+    const disponibles = await Indicatiu.trobarDisponibles()
 
     if (disponibles.length === 0) {
       return res.status(404).json({
         error: true,
         missatge: 'No hi ha indicatius disponibles en aquest moment',
-      });
+      })
     }
 
-    // --- Algoritme Haversine: trobar el més proper ---
-    const mesProper = trobarMesProper(
+    // --- Calcular rutes OSRM per a tots els indicatius disponibles ---
+    // Si OSRM falla per algun, caiem de tornada a Haversine
+    const ambRutes = await calcularRutesMultiples(
       parseFloat(incidencia.ubicacio_lat),
       parseFloat(incidencia.ubicacio_lon),
       disponibles
-    );
+    )
 
-    if (!mesProper) {
+    // --- Seleccionar el millor candidat ---
+    // Prioritat: temps_minuts (OSRM) > distancia_km (Haversine fallback)
+    const ambUbicacio = ambRutes.filter(
+      (i) => i.ubicacio_lat !== null && i.ubicacio_lon !== null
+    )
+
+    if (ambUbicacio.length === 0) {
       return res.status(404).json({
         error: true,
-        missatge: 'No s\'ha pogut determinar cap indicatiu proper (sense coordenades GPS)',
-      });
+        missatge: 'Cap indicatiu disponible té coordenades GPS',
+      })
+    }
+
+    // Separar els que tenen dades OSRM dels que no
+    const ambOSRM = ambUbicacio.filter((i) => i.temps_minuts !== null)
+    const senseOSRM = ambUbicacio.filter((i) => i.temps_minuts === null)
+
+    let mesRapid
+
+    if (ambOSRM.length > 0) {
+      // Ordenar per temps_minuts (OSRM) → el que triga menys
+      ambOSRM.sort((a, b) => a.temps_minuts - b.temps_minuts)
+      mesRapid = ambOSRM[0]
+    } else {
+      // Fallback: Haversine si OSRM no ha funcionat per a cap
+      console.warn('⚠️ OSRM no ha retornat resultats, usant Haversine com a fallback')
+      const { trobarMesProper } = await import('../utils/haversine.js')
+      mesRapid = trobarMesProper(
+        parseFloat(incidencia.ubicacio_lat),
+        parseFloat(incidencia.ubicacio_lon),
+        senseOSRM
+      )
+    }
+
+    if (!mesRapid) {
+      return res.status(404).json({
+        error: true,
+        missatge: "No s'ha pogut determinar cap indicatiu disponible",
+      })
     }
 
     // --- Crear l'assignació ---
     const novaAssignacio = await Assignacio.crear({
       incidencia_id,
-      indicatiu_id: mesProper.id,
+      indicatiu_id: mesRapid.id,
       mode_assignacio: 'automatica',
       usuari_assignador_id: req.usuari.userId,
-    });
+    })
 
-    // --- Actualitzar l'indicatiu ---
-    await Indicatiu.assignarIncidencia(mesProper.id, incidencia_id);
+    await Indicatiu.assignarIncidencia(mesRapid.id, incidencia_id)
+    await Incidencia.canviarEstat(incidencia_id, 'assignada')
 
-    // --- Actualitzar estat de la incidència ---
-    await Incidencia.canviarEstat(incidencia_id, 'assignada');
-
-    // ✅ US014: Registrar a traçabilitat
+    // --- Traçabilitat ---
     await registrarEsdeveniment(
       'assignacio_creada',
       req.usuari.userId,
       incidencia_id,
-      mesProper.id,
-      `Assignació automàtica: Indicatiu ${mesProper.codi} (${mesProper.distancia_km} km)`,
+      mesRapid.id,
+      `Assignació automàtica: Indicatiu ${mesRapid.codi} ` +
+        (mesRapid.temps_minuts !== null
+          ? `(${mesRapid.temps_minuts} min, ${mesRapid.distancia_km} km)`
+          : `(${mesRapid.distancia_km} km, Haversine)`),
       {
         mode: 'automatica',
-        indicatiu_codi: mesProper.codi,
-        distancia_km: mesProper.distancia_km,
+        indicatiu_codi: mesRapid.codi,
+        distancia_km: mesRapid.distancia_km,
+        temps_minuts: mesRapid.temps_minuts,
+        metode: mesRapid.temps_minuts !== null ? 'osrm' : 'haversine',
         total_disponibles: disponibles.length,
       }
-    );
+    )
 
-    const assignacioCompleta = await Assignacio.trobarPerId(novaAssignacio.id);
+    const assignacioCompleta = await Assignacio.trobarPerId(novaAssignacio.id)
 
-    
-    // EMETRE EVENT WEBSOCKET
-    emetreIncidenciaAssignada(assignacioCompleta, incidencia, mesProper);
+    emetreIncidenciaAssignada(assignacioCompleta, incidencia, mesRapid)
 
     res.status(201).json({
       exit: true,
-      missatge: `Assignació automàtica creada. Indicatiu ${mesProper.codi} seleccionat (${mesProper.distancia_km} km).`,
+      missatge: `Assignació automàtica creada. Indicatiu ${mesRapid.codi} seleccionat.`,
       algorisme: {
-        indicatiu_seleccionat: mesProper.codi,
-        distancia_km: mesProper.distancia_km,
+        indicatiu_seleccionat: mesRapid.codi,
+        distancia_km: mesRapid.distancia_km,
+        temps_minuts: mesRapid.temps_minuts,
+        metode: mesRapid.temps_minuts !== null ? 'osrm' : 'haversine',
         indicatius_avaluats: disponibles.length,
       },
       dades: assignacioCompleta,
-    });
+    })
   } catch (error) {
-    console.error('❌ Error en assignació automàtica:', error);
-    next(error);
+    console.error('❌ Error en assignació automàtica:', error)
+    next(error)
   }
-};
+}
 
 // ==============================================================
 // PATCH /api/assignacions/:id/acceptar
