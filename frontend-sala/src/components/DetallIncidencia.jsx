@@ -11,6 +11,8 @@ import {
   assignacioAutomatica,
 } from '../services/api';
 import ModalAssignacioManual from './ModalAssignacioManual';
+import VideoPlayer from './VideoPlayer';
+import ModalVideo from './ModalVideo';
 
 // =====================================================
 // CONSTANTS I HELPERS VISUALS
@@ -94,6 +96,9 @@ const tempsRelatiu = (timestamp) => {
   const difD = Math.floor(difH / 24);
   return `Fa ${difD} d`;
 };
+
+// Estat del modal de video
+const [streamAmpliat, setStreamAmpliat] = useState(null);
 
 // =====================================================
 // SUB-COMPONENT: Línia de l'historial
@@ -467,6 +472,17 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
             </section>
           )}
 
+          {/* ── SECCIÓ: Vídeo en directe ── */}
+          <section className="border-b">
+            <h3 className="px-4 pt-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              Vídeo en directe
+            </h3>
+            <VideoPlayer
+              incidenciaId={inc.id}
+              onAmpliar={(stream) => setStreamAmpliat(stream)}
+            />
+          </section>
+
           {/* ── SECCIÓ: Historial / Timeline ── */}
           <section className="p-4">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
@@ -509,6 +525,14 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
           incidencia={inc}
           onTancar={() => setMostrarModalManual(false)}
           onAssignat={handleAssignacioManualOk}
+        />
+      )}
+
+      {/* ── MODAL VÍDEO EN GRAN ── */}
+      {streamAmpliat && (
+        <ModalVideo
+          stream={streamAmpliat}
+          onTancar={() => setStreamAmpliat(null)}
         />
       )}
     </>

@@ -176,4 +176,21 @@ export const obtenirRutaOSRM = async (latOrigen, lonOrigen, latDesti, lonDesti) 
   }
 }
 
+// ─── STREAMS DE VÍDEO ──────────────────────────────────────────────────
+
+export const getStreamsPerIncidencia = async (incidenciaId) => {
+  const response = await api.get(`/streams?incidencia_id=${incidenciaId}`)
+  return response.data
+}
+
+export const getStreamsPerIndicatiu = async (indicatiuId) => {
+  const response = await api.get(`/streams?indicatiu_id=${indicatiuId}`)
+  return response.data
+}
+
+export const getTotsStreams = async () => {
+  const response = await api.get('/streams')
+  return response.data
+}
+
 export default api;
