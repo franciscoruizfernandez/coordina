@@ -6,6 +6,7 @@ import {
   getHistorialIndicatiu,
   getIncidencia,
 } from "../services/api";
+import TempsRelatiu from "./TempsRelatiu";
 
 // =====================================================
 // CONSTANTS I HELPERS
@@ -87,7 +88,11 @@ function FilaHistorial({ event }) {
       <div className="flex-1 min-w-0">
         <p className="text-xs text-gray-700 leading-snug">{event.descripcio}</p>
         <p className="text-xs text-gray-400 mt-0.5">
-          {formatarData(event.timestamp)}
+          <TempsRelatiu
+            timestamp={event.timestamp}
+            className="text-gray-400"
+          />
+          <span className="ml-1">— {formatarData(event.timestamp)}</span>
         </p>
       </div>
     </div>
@@ -272,6 +277,11 @@ function DetallIndicatiu({ indicatiu, onTancar, onVeureIncidencia }) {
                 </dt>
                 <dd className="text-gray-800">
                   {formatarData(ind.ultima_actualitzacio_gps)}
+                  {ind.ultima_actualitzacio_gps && (
+                    <span className="text-gray-400 ml-1 text-xs">
+                      (<TempsRelatiu timestamp={ind.ultima_actualitzacio_gps} />)
+                    </span>
+                  )}
                 </dd>
               </div>
             </dl>

@@ -13,6 +13,7 @@ import {
 import ModalAssignacioManual from './ModalAssignacioManual';
 import VideoPlayer from './VideoPlayer';
 import ModalVideo from './ModalVideo';
+import TempsRelatiu from './TempsRelatiu';
 
 // =====================================================
 // CONSTANTS I HELPERS VISUALS
@@ -97,8 +98,6 @@ const tempsRelatiu = (timestamp) => {
   return `Fa ${difD} d`;
 };
 
-// Estat del modal de video
-const [streamAmpliat, setStreamAmpliat] = useState(null);
 
 // =====================================================
 // SUB-COMPONENT: Línia de l'historial
@@ -117,7 +116,11 @@ function FilaHistorial({ event }) {
           {event.descripcio}
         </p>
         <p className="text-xs text-gray-400 mt-0.5">
-          {formatarData(event.timestamp)}
+          <TempsRelatiu
+            timestamp={event.timestamp}
+            className="text-gray-400"
+          />
+          <span className="ml-1">— {formatarData(event.timestamp)}</span>
         </p>
       </div>
     </div>
@@ -165,6 +168,9 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
   const [canviantEstat, setCanviantEstat]     = useState(false);
   const [assignantAuto, setAssignantAuto]     = useState(false);
   const [mostrarModalManual, setMostrarModalManual] = useState(false);
+
+  // Estat del modal de video
+  const [streamAmpliat, setStreamAmpliat] = useState(null);
 
   // ------- Carregar dades detallades -------
   const carregarDetall = useCallback(async () => {
@@ -368,7 +374,7 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
                   <dd className="text-gray-800">
                     {formatarData(inc.timestamp_recepcio)}
                     <span className="text-gray-400 ml-1 text-xs">
-                      ({tempsRelatiu(inc.timestamp_recepcio)})
+                      (<TempsRelatiu timestamp={inc.timestamp_recepcio} />)
                     </span>
                   </dd>
                 </div>
@@ -398,7 +404,12 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
                 {inc.data_tancament && (
                   <div className="flex gap-2">
                     <dt className="text-gray-500 w-24 flex-shrink-0">Tancada:</dt>
-                    <dd className="text-gray-800">{formatarData(inc.data_tancament)}</dd>
+                    <dd className="text-gray-800">
+                      {formatarData(inc.data_tancament)}
+                      <span className="text-gray-400 ml-1 text-xs">
+                        (<TempsRelatiu timestamp={inc.data_tancament} />)
+                      </span>
+                    </dd>
                   </div>
                 )}
               </dl>

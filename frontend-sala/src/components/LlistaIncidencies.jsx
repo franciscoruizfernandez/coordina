@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import TempsRelatiu from "./TempsRelatiu";
 
 // ✅ Ordre de prioritat manual
 const ordrePrioritat = {
@@ -126,7 +127,10 @@ function LlistaIncidencies({ incidencies, onSeleccionar }) {
             </div>
 
             <p className="text-xs text-gray-500">
-              {new Date(inc.timestamp_recepcio).toLocaleTimeString("ca-ES")}
+              <TempsRelatiu
+                timestamp={inc.timestamp_recepcio}
+                className="text-xs text-gray-500"
+              />
             </p>
           </div>
         ))}
