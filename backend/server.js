@@ -17,6 +17,7 @@ import indicatiuRoutes    from './routes/indicatiuRoutes.js';
 import assignacioRoutes   from './routes/assignacioRoutes.js';
 import tracabilitatRoutes from './routes/tracabilitatRoutes.js';
 import missatgeRoutes from './routes/missatgeRoutes.js';
+import streamRoutes from './routes/streamRoutes.js';
 
 dotenv.config();
 
@@ -87,6 +88,7 @@ app.get('/', (req, res) => {
       assignacions: '/api/assignacions',
       tracabilitat: '/api/tracabilitat',
       missatges: '/api/missatges',
+      stremas: '/api/streams',
     },
   });
 });
@@ -100,6 +102,7 @@ app.use('/api/indicatius',    indicatiuRoutes);
 app.use('/api/assignacions',  assignacioRoutes);
 app.use('/api/tracabilitat',  tracabilitatRoutes);
 app.use('/api/missatges', missatgeRoutes);
+app.use('/api/streams', streamRoutes);
 
 // ==============================================================
 // RUTES DE TEST (es mantenen)
