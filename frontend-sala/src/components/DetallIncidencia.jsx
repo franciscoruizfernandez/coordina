@@ -1,9 +1,7 @@
 // src/components/DetallIncidencia.jsx
-// Panell dret de la Sala de Control
-// Mostra tota la informació d'una incidència seleccionada amb totes les accions possibles
 
-import { useState, useEffect, useCallback } from 'react';
-import { toast } from 'react-toastify'; // ✅ US-037
+import { useState, useEffect, useCallback, memo } from 'react';
+import { toast } from 'react-toastify';
 import {
   getIncidencia,
   getHistorialIncidencia,
@@ -19,7 +17,6 @@ import TempsRelatiu from './TempsRelatiu';
 // CONSTANTS I HELPERS VISUALS
 // =====================================================
 
-// Mapa de colors per prioritat
 const COLOR_PRIORITAT = {
   critica: { bg: 'bg-red-100',    text: 'text-red-800',    border: 'border-red-400',    dot: 'bg-red-500'    },
   alta:    { bg: 'bg-orange-100', text: 'text-orange-800', border: 'border-orange-400', dot: 'bg-orange-500' },
@@ -27,7 +24,6 @@ const COLOR_PRIORITAT = {
   baixa:   { bg: 'bg-green-100',  text: 'text-green-800',  border: 'border-green-400',  dot: 'bg-green-500'  },
 };
 
-// Mapa de colors per estat
 const COLOR_ESTAT = {
   nova:      'bg-blue-100 text-blue-800',
   assignada: 'bg-purple-100 text-purple-800',
@@ -36,7 +32,6 @@ const COLOR_ESTAT = {
   tancada:   'bg-gray-100 text-gray-600',
 };
 
-// Transicions d'estat permeses (igual que al backend)
 const TRANSICIONS_PERMESES = {
   nova:      ['assignada', 'tancada'],
   assignada: ['en_curs', 'nova', 'tancada'],
@@ -45,7 +40,6 @@ const TRANSICIONS_PERMESES = {
   tancada:   [],
 };
 
-// Etiquetes llegibles dels estats
 const ETIQUETA_ESTAT = {
   nova:      'Nova',
   assignada: 'Assignada',
@@ -54,7 +48,6 @@ const ETIQUETA_ESTAT = {
   tancada:   'Tancada',
 };
 
-// Icones per tipus d'esdeveniment de l'historial
 const ICONA_TIPUS_ESDEVENIMENT = {
   creacio_incidencia:       '🆕',
   modificacio_incidencia:   '✏️',
@@ -67,7 +60,6 @@ const ICONA_TIPUS_ESDEVENIMENT = {
   default:                  '📌',
 };
 
-// Format de data/hora llegible en català
 const formatarData = (timestamp) => {
   if (!timestamp) return '—';
   return new Date(timestamp).toLocaleString('ca-ES', {
@@ -80,29 +72,11 @@ const formatarData = (timestamp) => {
   });
 };
 
-// Temps relatiu (fa X minuts/hores)
-const tempsRelatiu = (timestamp) => {
-  if (!timestamp) return '';
-  const ara = new Date();
-  const data = new Date(timestamp);
-  const difMs = ara - data;
-  const difMin = Math.floor(difMs / 60000);
-
-  if (difMin < 1)  return 'Ara mateix';
-  if (difMin < 60) return `Fa ${difMin} min`;
-
-  const difH = Math.floor(difMin / 60);
-  if (difH < 24)   return `Fa ${difH} h`;
-
-  const difD = Math.floor(difH / 24);
-  return `Fa ${difD} d`;
-};
-
-
 // =====================================================
-// SUB-COMPONENT: Línia de l'historial
+// SUB-COMPONENTS MEMORITZATS
 // =====================================================
-function FilaHistorial({ event }) {
+
+const FilaHistorial = memo(function FilaHistorial({ event }) {
   const icona = ICONA_TIPUS_ESDEVENIMENT[event.tipus_esdeveniment]
     || ICONA_TIPUS_ESDEVENIMENT.default;
 
@@ -125,12 +99,9 @@ function FilaHistorial({ event }) {
       </div>
     </div>
   );
-}
+});
 
-// =====================================================
-// SUB-COMPONENT: Badge de prioritat
-// =====================================================
-function BadgePrioritat({ prioritat }) {
+const BadgePrioritat = memo(function BadgePrioritat({ prioritat }) {
   const colors = COLOR_PRIORITAT[prioritat] || COLOR_PRIORITAT.baixa;
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${colors.bg} ${colors.text}`}>
@@ -138,50 +109,40 @@ function BadgePrioritat({ prioritat }) {
       {prioritat?.charAt(0).toUpperCase() + prioritat?.slice(1)}
     </span>
   );
-}
+});
 
-// =====================================================
-// SUB-COMPONENT: Badge d'estat
-// =====================================================
-function BadgeEstat({ estat }) {
+const BadgeEstat = memo(function BadgeEstat({ estat }) {
   const colors = COLOR_ESTAT[estat] || 'bg-gray-100 text-gray-600';
   return (
     <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${colors}`}>
       {ETIQUETA_ESTAT[estat] || estat}
     </span>
   );
-}
+});
 
 // =====================================================
-// COMPONENT PRINCIPAL: DetallIncidencia
+// COMPONENT PRINCIPAL
 // =====================================================
+
 function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
-  // ------- Estat local -------
-  const [detall, setDetall]                   = useState(null);
-  const [historial, setHistorial]             = useState([]);
-  const [carregantDetall, setCarregantDetall] = useState(true);
+  const [detall, setDetall]                         = useState(null);
+  const [historial, setHistorial]                   = useState([]);
+  const [carregantDetall, setCarregantDetall]       = useState(true);
   const [carregantHistorial, setCarregantHistorial] = useState(true);
-  const [error, setError]                     = useState(null);
-
-  // Estat per a les accions
-  //  Eliminats missatgeExit i errorAccio → ara usem toast directament
-  const [canviantEstat, setCanviantEstat]     = useState(false);
-  const [assignantAuto, setAssignantAuto]     = useState(false);
+  const [error, setError]                           = useState(null);
+  const [canviantEstat, setCanviantEstat]           = useState(false);
+  const [assignantAuto, setAssignantAuto]           = useState(false);
   const [mostrarModalManual, setMostrarModalManual] = useState(false);
+  const [streamAmpliat, setStreamAmpliat]           = useState(null);
 
-  // Estat del modal de video
-  const [streamAmpliat, setStreamAmpliat] = useState(null);
-
-  // ------- Carregar dades detallades -------
+  // ─── Carregar dades detallades ───────────────────────────────
   const carregarDetall = useCallback(async () => {
     if (!incidencia?.id) return;
 
     try {
       setCarregantDetall(true);
       setError(null);
-
       const resposta = await getIncidencia(incidencia.id);
-      // Backend retorna { exit: true, dades: incidencia }
       setDetall(resposta.dades || resposta);
     } catch (err) {
       console.error('❌ Error carregant detall:', err);
@@ -191,25 +152,22 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
     }
   }, [incidencia?.id]);
 
-  // ------- Carregar historial -------
+  // ─── Carregar historial ──────────────────────────────────────
   const carregarHistorial = useCallback(async () => {
     if (!incidencia?.id) return;
 
     try {
       setCarregantHistorial(true);
       const resposta = await getHistorialIncidencia(incidencia.id);
-      // Backend retorna { exit: true, dades: [...], total_accions: N }
       setHistorial(resposta.dades || []);
     } catch (err) {
       console.error('❌ Error carregant historial:', err);
-      // No bloquejem si l'historial falla
       setHistorial([]);
     } finally {
       setCarregantHistorial(false);
     }
   }, [incidencia?.id]);
 
-  // Carregar quan canvia la incidència seleccionada
   useEffect(() => {
     setDetall(null);
     setHistorial([]);
@@ -217,86 +175,61 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
     carregarHistorial();
   }, [incidencia?.id, carregarDetall, carregarHistorial]);
 
-  // ------- ACCIÓ: Canviar estat -------
-  const handleCanviarEstat = async (nouEstat) => {
+  // ─── Accions ────────────────────────────────────────────────
+  const handleCanviarEstat = useCallback(async (nouEstat) => {
     try {
       setCanviantEstat(true);
-
       await canviarEstatIncidencia(incidencia.id, nouEstat);
-
-      //  Toast d'èxit en canvi d'estat
       toast.success(`✅ Estat canviat a "${ETIQUETA_ESTAT[nouEstat]}" correctament`);
-
-      // Actualitzar detall local
       await carregarDetall();
       await carregarHistorial();
-
-      // Notificar al pare (Dashboard) perquè actualitzi la llista
       if (onIncidenciaActualitzada) {
         onIncidenciaActualitzada(incidencia.id, { estat: nouEstat });
       }
     } catch (err) {
       console.error('❌ Error canviant estat:', err);
-      //  Toast d'error en canvi d'estat
-      toast.error(
-        `⚠️ ${err.response?.data?.missatge || "Error en canviar l'estat"}`
-      );
+      toast.error(`⚠️ ${err.response?.data?.missatge || "Error en canviar l'estat"}`);
     } finally {
       setCanviantEstat(false);
     }
-  };
+  }, [incidencia?.id, carregarDetall, carregarHistorial, onIncidenciaActualitzada]);
 
-  // ------- ACCIÓ: Assignació automàtica -------
-  const handleAssignacioAutomatica = async () => {
+  const handleAssignacioAutomatica = useCallback(async () => {
     try {
       setAssignantAuto(true);
-
       const resposta = await assignacioAutomatica(incidencia.id);
-
-      //  Toast d'èxit en assignació automàtica
       toast.success(
         `⚡ Assignació automàtica: patrulla ${resposta.algorisme?.indicatiu_seleccionat || 'assignada'} (${resposta.algorisme?.distancia_km || '?'} km)`
       );
-
       await carregarDetall();
       await carregarHistorial();
-
       if (onIncidenciaActualitzada) {
         onIncidenciaActualitzada(incidencia.id, { estat: 'assignada' });
       }
     } catch (err) {
       console.error('❌ Error en assignació automàtica:', err);
-      //  Toast d'error en assignació automàtica
-      toast.error(
-        `⚠️ ${err.response?.data?.missatge || "Error en l'assignació automàtica"}`
-      );
+      toast.error(`⚠️ ${err.response?.data?.missatge || "Error en l'assignació automàtica"}`);
     } finally {
       setAssignantAuto(false);
     }
-  };
+  }, [incidencia?.id, carregarDetall, carregarHistorial, onIncidenciaActualitzada]);
 
-  // ------- ACCIÓ: Assignació manual completada -------
-  const handleAssignacioManualOk = async () => {
+  const handleAssignacioManualOk = useCallback(async () => {
     setMostrarModalManual(false);
-    //  Toast d'èxit en assignació manual
     toast.success('👮 Assignació manual realitzada correctament');
     await carregarDetall();
     await carregarHistorial();
-
     if (onIncidenciaActualitzada) {
       onIncidenciaActualitzada(incidencia.id, { estat: 'assignada' });
     }
-  };
+  }, [incidencia?.id, carregarDetall, carregarHistorial, onIncidenciaActualitzada]);
 
-  // ------- Dades a mostrar (preferim les detallades, sinó les bàsiques) -------
+  // ─── Dades a mostrar ────────────────────────────────────────
   const inc = detall || incidencia;
   const estatActual = inc?.estat || 'nova';
   const transicions = TRANSICIONS_PERMESES[estatActual] || [];
   const esTancada = estatActual === 'tancada';
 
-  // =====================================================
-  // RENDER: Estat de càrrega inicial
-  // =====================================================
   if (!inc) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -307,12 +240,8 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
 
   const colors = COLOR_PRIORITAT[inc.prioritat] || COLOR_PRIORITAT.baixa;
 
-  // =====================================================
-  // RENDER PRINCIPAL
-  // =====================================================
   return (
     <>
-      {/* ── CONTENIDOR PRINCIPAL ── */}
       <div className="flex flex-col h-full bg-white">
 
         {/* ══ CAPÇALERA ══ */}
@@ -345,17 +274,13 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
         {/* ══ SCROLL INTERN ══ */}
         <div className="flex-1 overflow-y-auto">
 
-          {/*  Eliminats banners manuals (missatgeExit i errorAccio) */}
-          {/* Ara tots els missatges van via toast global */}
-
-          {/* Error de càrrega principal */}
           {error && (
             <div className="mx-4 mt-3 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
               ⚠️ {error}
             </div>
           )}
 
-          {/* ── SECCIÓ: Informació general ── */}
+          {/* ── Informació general ── */}
           <section className="p-4 border-b">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
               Informació general
@@ -416,7 +341,7 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
             )}
           </section>
 
-          {/* ── SECCIÓ: Accions ── */}
+          {/* ── Accions ── */}
           {!esTancada && (
             <section className="p-4 border-b">
               <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
@@ -424,7 +349,6 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
               </h3>
 
               <div className="space-y-2">
-
                 {estatActual === 'nova' && (
                   <button
                     onClick={handleAssignacioAutomatica}
@@ -483,7 +407,7 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
             </section>
           )}
 
-          {/* ── SECCIÓ: Vídeo en directe ── */}
+          {/* ── Vídeo en directe ── */}
           <section className="border-b">
             <h3 className="px-4 pt-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">
               Vídeo en directe
@@ -494,7 +418,7 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
             />
           </section>
 
-          {/* ── SECCIÓ: Historial / Timeline ── */}
+          {/* ── Historial ── */}
           <section className="p-4">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
               Historial d'accions
@@ -525,12 +449,8 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
           </section>
 
         </div>
-        {/* ── Fi scroll intern ── */}
-
       </div>
-      {/* ── Fi contenidor principal ── */}
 
-      {/* ── MODAL ASSIGNACIÓ MANUAL ── */}
       {mostrarModalManual && (
         <ModalAssignacioManual
           incidencia={inc}
@@ -539,7 +459,6 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
         />
       )}
 
-      {/* ── MODAL VÍDEO EN GRAN ── */}
       {streamAmpliat && (
         <ModalVideo
           stream={streamAmpliat}

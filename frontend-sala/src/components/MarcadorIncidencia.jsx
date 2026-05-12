@@ -1,5 +1,5 @@
+import { memo, useRef, useCallback } from "react";
 import { Marker, Popup } from "react-leaflet";
-import { useRef } from "react";
 import L from "leaflet";
 
 const obtenirColorPrioritat = (prioritat) => {
@@ -35,6 +35,7 @@ const crearIcona = (prioritat, seleccionat = false) => {
         color: white;
         font-weight: bold;
         font-size: ${seleccionat ? "20px" : "16px"};
+        transition: all 0.2s ease-out;
       ">⚠</div>
     `,
     iconSize: [mida, mida],
@@ -43,35 +44,34 @@ const crearIcona = (prioritat, seleccionat = false) => {
   });
 };
 
-function MarcadorIncidencia({ incidencia, onSeleccionar, seleccionat = false }) {
+// ─── memo: només es rerenderitza si canvien les props ───────
+const MarcadorIncidencia = memo(function MarcadorIncidencia({
+  incidencia,
+  onSeleccionar,
+  seleccionat = false,
+}) {
   const markerRef = useRef(null);
   const posicio = [incidencia.ubicacio_lat, incidencia.ubicacio_lon];
   const icona = crearIcona(incidencia.prioritat, seleccionat);
 
-  const handleVeureDetalls = () => {
-    // Tancar popup primer
+  const handleVeureDetalls = useCallback(() => {
     markerRef.current?.closePopup();
-    // Després seleccionar
     onSeleccionar?.(incidencia);
-  };
+  }, [incidencia, onSeleccionar]);
 
   return (
-    <Marker
-      ref={markerRef}
-      position={posicio}
-      icon={icona}
-    >
+    <Marker ref={markerRef} position={posicio} icon={icona}>
       <Popup>
-        <div className="p-2 min-w-[200px]">
-          <h3 className="font-semibold text-sm mb-2">
-            {incidencia.tipologia?.toUpperCase()}
+        <div className="p-2 min-w-[200px] animar-fade">
+          <h3 className="font-semibold text-sm mb-2 capitalize">
+            {incidencia.tipologia}
           </h3>
 
           <div className="text-xs space-y-1 mb-3">
             <p>
               <strong>Prioritat:</strong>{" "}
               <span
-                className="px-2 py-0.5 rounded text-white"
+                className="px-2 py-0.5 rounded text-white text-xs"
                 style={{ backgroundColor: obtenirColorPrioritat(incidencia.prioritat) }}
               >
                 {incidencia.prioritat}
@@ -89,7 +89,8 @@ function MarcadorIncidencia({ incidencia, onSeleccionar, seleccionat = false }) 
           {onSeleccionar && (
             <button
               onClick={handleVeureDetalls}
-              className="w-full bg-blue-600 text-white py-1 px-2 rounded text-xs hover:bg-blue-700"
+              className="w-full bg-blue-600 text-white py-1.5 px-2 rounded text-xs
+                         hover:bg-blue-700 transition-colors duration-200"
             >
               Veure detalls
             </button>
@@ -98,6 +99,6 @@ function MarcadorIncidencia({ incidencia, onSeleccionar, seleccionat = false }) 
       </Popup>
     </Marker>
   );
-}
+});
 
 export default MarcadorIncidencia;

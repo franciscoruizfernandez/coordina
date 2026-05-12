@@ -182,3 +182,101 @@
     border-right-color: var(--border);
   }
 }
+
+/* ─── Animacions personalitzades ─────────────────────────── */
+
+/* Entrada amb fade + slide des de baix */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Entrada amb fade + slide des de la dreta */
+@keyframes fadeSlideLeft {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Fade in simple */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Pulse suau per marcadors nous */
+@keyframes pulseSuau {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+/* Classes reutilitzables */
+.animar-entrada {
+  animation: fadeSlideUp 0.25s ease-out;
+}
+
+.animar-entrada-dreta {
+  animation: fadeSlideLeft 0.2s ease-out;
+}
+
+.animar-fade {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animar-pulse {
+  animation: pulseSuau 2s ease-in-out infinite;
+}
+
+/* Respectar preferències d'accessibilitat */
+@media (prefers-reduced-motion: reduce) {
+  .animar-entrada,
+  .animar-entrada-dreta,
+  .animar-fade,
+  .animar-pulse {
+    animation: none !important;
+  }
+}
+
+/* ─── Accessibilitat ─────────────────────────────────────── */
+
+/* Focus visible per a navegació per teclat */
+*:focus-visible {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Eliminar outline per defecte en clic de ratolí */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Skip link per saltar a contingut principal */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  background: #1e40af;
+  color: white;
+  padding: 8px 16px;
+  z-index: 9999;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 0 0 8px 0;
+}
+
+.skip-link:focus {
+  top: 0;
+}

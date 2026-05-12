@@ -1,6 +1,6 @@
 // src/components/DetallIndicatiu.jsx
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import {
   getIndicatiu,
   getHistorialIndicatiu,
@@ -13,41 +13,41 @@ import TempsRelatiu from "./TempsRelatiu";
 // =====================================================
 
 const COLOR_ESTAT = {
-  disponible: "bg-green-100 text-green-800",
-  en_servei: "bg-blue-100 text-blue-800",
+  disponible:    "bg-green-100 text-green-800",
+  en_servei:     "bg-blue-100 text-blue-800",
   no_disponible: "bg-gray-100 text-gray-600",
-  finalitzat: "bg-slate-200 text-slate-700",
+  finalitzat:    "bg-slate-200 text-slate-700",
 };
 
 const ETIQUETA_ESTAT = {
-  disponible: "Disponible",
-  en_servei: "En servei",
+  disponible:    "Disponible",
+  en_servei:     "En servei",
   no_disponible: "No disponible",
-  finalitzat: "Finalitzat",
+  finalitzat:    "Finalitzat",
 };
 
 const ETIQUETA_TIPUS = {
   cotxe: "🚔 Cotxe",
-  moto: "🏍️ Moto",
+  moto:  "🏍️ Moto",
   furgo: "🚐 Furgó",
 };
 
 const ICONA_EVENT = {
-  creacio_indicatiu: "🆕",
-  actualitzacio_gps: "📍",
+  creacio_indicatiu:     "🆕",
+  actualitzacio_gps:     "📍",
   canvi_estat_indicatiu: "🔄",
-  assignacio_creada: "📋",
-  assignacio_acceptada: "✅",
-  assignacio_finalitzada: "🏁",
-  assignacio_cancel_lada: "❌",
-  default: "📌",
+  assignacio_creada:     "📋",
+  assignacio_acceptada:  "✅",
+  assignacio_finalitzada:"🏁",
+  assignacio_cancel_lada:"❌",
+  default:               "📌",
 };
 
 const COLOR_PRIORITAT = {
-  critica: { bg: "bg-red-100", text: "text-red-800", dot: "#DC2626" },
-  alta: { bg: "bg-orange-100", text: "text-orange-800", dot: "#F97316" },
+  critica: { bg: "bg-red-100",    text: "text-red-800",    dot: "#DC2626" },
+  alta:    { bg: "bg-orange-100", text: "text-orange-800", dot: "#F97316" },
   mitjana: { bg: "bg-yellow-100", text: "text-yellow-800", dot: "#FBBF24" },
-  baixa: { bg: "bg-green-100", text: "text-green-800", dot: "#10B981" },
+  baixa:   { bg: "bg-green-100",  text: "text-green-800",  dot: "#10B981" },
 };
 
 const formatarData = (timestamp) => {
@@ -63,21 +63,19 @@ const formatarData = (timestamp) => {
 };
 
 // =====================================================
-// SUB-COMPONENTS
+// SUB-COMPONENTS MEMORITZATS
 // =====================================================
 
-function BadgeEstat({ estat }) {
+const BadgeEstat = memo(function BadgeEstat({ estat }) {
   const colors = COLOR_ESTAT[estat] || "bg-gray-100 text-gray-600";
   return (
-    <span
-      className={`px-2.5 py-1 rounded-full text-xs font-semibold ${colors}`}
-    >
+    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${colors}`}>
       {ETIQUETA_ESTAT[estat] || estat}
     </span>
   );
-}
+});
 
-function FilaHistorial({ event }) {
+const FilaHistorial = memo(function FilaHistorial({ event }) {
   const icona = ICONA_EVENT[event.tipus_esdeveniment] || ICONA_EVENT.default;
 
   return (
@@ -97,21 +95,20 @@ function FilaHistorial({ event }) {
       </div>
     </div>
   );
-}
+});
 
 // =====================================================
 // COMPONENT PRINCIPAL
 // =====================================================
 
 function DetallIndicatiu({ indicatiu, onTancar, onVeureIncidencia }) {
-  const [detall, setDetall] = useState(null);
-  const [historial, setHistorial] = useState([]);
-  const [carregantDetall, setCarregantDetall] = useState(true);
+  const [detall, setDetall]                         = useState(null);
+  const [historial, setHistorial]                   = useState([]);
+  const [carregantDetall, setCarregantDetall]       = useState(true);
   const [carregantHistorial, setCarregantHistorial] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError]                           = useState(null);
   const [incidenciaAssignada, setIncidenciaAssignada] = useState(null);
 
-  // ------- Carregar detall + incidència assignada -------
   const carregarDetall = useCallback(async () => {
     if (!indicatiu?.id) return;
 
@@ -141,7 +138,6 @@ function DetallIndicatiu({ indicatiu, onTancar, onVeureIncidencia }) {
     }
   }, [indicatiu?.id]);
 
-  // ------- Carregar historial -------
   const carregarHistorial = useCallback(async () => {
     if (!indicatiu?.id) return;
 
@@ -157,7 +153,6 @@ function DetallIndicatiu({ indicatiu, onTancar, onVeureIncidencia }) {
     }
   }, [indicatiu?.id]);
 
-  // Carregar quan canvia l'indicatiu seleccionat
   useEffect(() => {
     setDetall(null);
     setHistorial([]);
@@ -166,7 +161,6 @@ function DetallIndicatiu({ indicatiu, onTancar, onVeureIncidencia }) {
     carregarHistorial();
   }, [indicatiu?.id, carregarDetall, carregarHistorial]);
 
-  // Sincronitzar canvis live (GPS / estat via socket)
   useEffect(() => {
     if (!indicatiu?.id) return;
 
@@ -192,11 +186,9 @@ function DetallIndicatiu({ indicatiu, onTancar, onVeureIncidencia }) {
     ? COLOR_PRIORITAT[incidenciaAssignada.prioritat] || COLOR_PRIORITAT.baixa
     : null;
 
-  // =====================================================
-  // RENDER
-  // =====================================================
   return (
     <div className="flex flex-col h-full bg-white">
+
       {/* ══ CAPÇALERA ══ */}
       <div className="p-4 border-b-4 border-blue-400">
         <div className="flex items-start justify-between">
@@ -204,16 +196,13 @@ function DetallIndicatiu({ indicatiu, onTancar, onVeureIncidencia }) {
             <div className="flex items-center gap-2 flex-wrap">
               <BadgeEstat estat={ind.estat_operatiu} />
             </div>
-
             <h2 className="text-base font-bold text-gray-800 mt-2">
               {ind.codi}
             </h2>
-
             <p className="text-xs text-gray-500 mt-0.5">
               {ETIQUETA_TIPUS[ind.tipus_unitat] || ind.tipus_unitat || "—"}
             </p>
           </div>
-
           <button
             onClick={onTancar}
             className="ml-2 flex-shrink-0 text-gray-400 hover:text-gray-600 text-xl leading-none"
@@ -226,16 +215,14 @@ function DetallIndicatiu({ indicatiu, onTancar, onVeureIncidencia }) {
 
       {/* ══ SCROLL INTERN ══ */}
       <div className="flex-1 overflow-y-auto">
-        {/* Error de càrrega */}
+
         {error && (
           <div className="mx-4 mt-3 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
             ⚠️ {error}
           </div>
         )}
 
-        {/* ══════════════════════════════════════════════ */}
-        {/* SECCIÓ 1: INFORMACIÓ GENERAL                  */}
-        {/* ══════════════════════════════════════════════ */}
+        {/* ── Informació general ── */}
         <section className="p-4 border-b-4 border-gray-200">
           <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
             Informació general
@@ -244,26 +231,19 @@ function DetallIndicatiu({ indicatiu, onTancar, onVeureIncidencia }) {
           {carregantDetall ? (
             <div className="space-y-2">
               {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="h-4 bg-gray-100 rounded animate-pulse"
-                />
+                <div key={i} className="h-4 bg-gray-100 rounded animate-pulse" />
               ))}
             </div>
           ) : (
             <dl className="space-y-2 text-sm">
               <div className="flex gap-2">
                 <dt className="text-gray-500 w-32 flex-shrink-0">Sector:</dt>
-                <dd className="text-gray-800">
-                  {ind.sector_assignat || "—"}
-                </dd>
+                <dd className="text-gray-800">{ind.sector_assignat || "—"}</dd>
               </div>
 
               {ind.ubicacio_lat != null && ind.ubicacio_lon != null && (
                 <div className="flex gap-2">
-                  <dt className="text-gray-500 w-32 flex-shrink-0">
-                    Coordenades:
-                  </dt>
+                  <dt className="text-gray-500 w-32 flex-shrink-0">Coordenades:</dt>
                   <dd className="text-gray-800 font-mono text-xs">
                     {parseFloat(ind.ubicacio_lat).toFixed(5)},{" "}
                     {parseFloat(ind.ubicacio_lon).toFixed(5)}
@@ -272,9 +252,7 @@ function DetallIndicatiu({ indicatiu, onTancar, onVeureIncidencia }) {
               )}
 
               <div className="flex gap-2">
-                <dt className="text-gray-500 w-32 flex-shrink-0">
-                  Últim GPS:
-                </dt>
+                <dt className="text-gray-500 w-32 flex-shrink-0">Últim GPS:</dt>
                 <dd className="text-gray-800">
                   {formatarData(ind.ultima_actualitzacio_gps)}
                   {ind.ultima_actualitzacio_gps && (
@@ -288,9 +266,7 @@ function DetallIndicatiu({ indicatiu, onTancar, onVeureIncidencia }) {
           )}
         </section>
 
-        {/* ══════════════════════════════════════════════ */}
-        {/* SECCIÓ 2: INCIDÈNCIA ACTIVA                   */}
-        {/* ══════════════════════════════════════════════ */}
+        {/* ── Incidència activa ── */}
         <section className="p-4 border-b-4 border-gray-200">
           <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
             Incidència activa
@@ -305,15 +281,10 @@ function DetallIndicatiu({ indicatiu, onTancar, onVeureIncidencia }) {
                   ? `${colorsPrioritat.bg} border-current`
                   : "bg-blue-50 border-blue-200"
               }`}
-              style={
-                colorsPrioritat
-                  ? { borderColor: colorsPrioritat.dot }
-                  : undefined
-              }
+              style={colorsPrioritat ? { borderColor: colorsPrioritat.dot } : undefined}
             >
               {incidenciaAssignada ? (
                 <>
-                  {/* Tipologia + prioritat */}
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-bold text-sm text-gray-800 capitalize">
                       {incidenciaAssignada.tipologia}
@@ -326,14 +297,12 @@ function DetallIndicatiu({ indicatiu, onTancar, onVeureIncidencia }) {
                     </span>
                   </div>
 
-                  {/* Direcció */}
                   {incidenciaAssignada.direccio && (
                     <p className="text-xs text-gray-600 mb-3">
                       📍 {incidenciaAssignada.direccio}
                     </p>
                   )}
 
-                  {/* Botó */}
                   {onVeureIncidencia && (
                     <button
                       onClick={() => onVeureIncidencia(incidenciaAssignada)}
@@ -344,7 +313,6 @@ function DetallIndicatiu({ indicatiu, onTancar, onVeureIncidencia }) {
                   )}
                 </>
               ) : (
-                /* Encara carregant el nom (tenim ID però no les dades) */
                 <div className="text-sm text-gray-600">
                   <p className="font-medium">Incidència assignada</p>
                   <p className="text-xs text-gray-400 font-mono mt-1">
@@ -354,12 +322,9 @@ function DetallIndicatiu({ indicatiu, onTancar, onVeureIncidencia }) {
               )}
             </div>
           ) : (
-            /* Sense incidència */
             <div className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4 text-center">
               <p className="text-2xl mb-1">📭</p>
-              <p className="text-sm font-medium text-gray-500">
-                Sense incidència activa
-              </p>
+              <p className="text-sm font-medium text-gray-500">Sense incidència activa</p>
               <p className="text-xs text-gray-400 mt-0.5">
                 Aquest indicatiu no té cap incidència assignada
               </p>
@@ -367,9 +332,7 @@ function DetallIndicatiu({ indicatiu, onTancar, onVeureIncidencia }) {
           )}
         </section>
 
-        {/* ══════════════════════════════════════════════ */}
-        {/* SECCIÓ 3: HISTORIAL                           */}
-        {/* ══════════════════════════════════════════════ */}
+        {/* ── Historial ── */}
         <section className="p-4">
           <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
             Historial
@@ -383,10 +346,7 @@ function DetallIndicatiu({ indicatiu, onTancar, onVeureIncidencia }) {
           {carregantHistorial ? (
             <div className="space-y-2">
               {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="h-10 bg-gray-100 rounded animate-pulse"
-                />
+                <div key={i} className="h-10 bg-gray-100 rounded animate-pulse" />
               ))}
             </div>
           ) : historial.length === 0 ? (
@@ -401,8 +361,8 @@ function DetallIndicatiu({ indicatiu, onTancar, onVeureIncidencia }) {
             </div>
           )}
         </section>
+
       </div>
-      {/* ── Fi scroll intern ── */}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -20,6 +21,9 @@ function App() {
         </Route>
 
         <Route path="/login" element={<Login />} />
+
+        {/* Ruta 404 per a qualsevol URL no reconeguda */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );

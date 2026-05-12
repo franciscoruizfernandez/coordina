@@ -1,44 +1,46 @@
-// src/components/ControlsCapes.jsx
-
 import { useState } from 'react';
 
 function ControlsCapes({ filtres, onCanviFiltres }) {
   const [obert, setObert] = useState(false);
 
   return (
-    <div className="absolute top-3 left-3 z-[1000]">
+    <div className="absolute top-3 left-3 z-[1000]" role="region" aria-label="Controls del mapa">
 
-      {/* ─── Botó per obrir/tancar el panell ─────── */}
+      {/* Botó per obrir/tancar */}
       <button
         onClick={() => setObert(!obert)}
         className="bg-white rounded-lg shadow-lg border border-gray-200
                    px-3 py-2 text-sm font-medium text-gray-700
                    hover:bg-gray-50 transition-colors flex items-center gap-2"
-        title="Controls del mapa"
+        aria-expanded={obert}
+        aria-controls="panell-capes"
+        aria-label={obert ? "Tancar controls del mapa" : "Obrir controls del mapa"}
       >
-        🗂️ Capes
-        <span className="text-xs text-gray-400">
+        <span aria-hidden="true">🗂️</span> Capes
+        <span className="text-xs text-gray-400" aria-hidden="true">
           {obert ? '▲' : '▼'}
         </span>
       </button>
 
-      {/* ─── Panell de controls ──────────────────── */}
+      {/* Panell de controls */}
       {obert && (
-        <div className="mt-2 bg-white rounded-lg shadow-xl border border-gray-200
-                        p-4 w-64">
-
-          {/* Títol */}
+        <div
+          id="panell-capes"
+          className="mt-2 bg-white rounded-lg shadow-xl border border-gray-200
+                     p-4 w-64 animar-entrada"
+          role="group"
+          aria-label="Filtres de visibilitat"
+        >
           <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
             Visibilitat del mapa
           </h3>
 
-          {/* ── Incidències ──────────────────────── */}
-          <div className="mb-4">
-            <p className="text-xs font-medium text-gray-600 mb-2">
-              📋 Incidències
-            </p>
+          {/* Incidències */}
+          <fieldset className="mb-4">
+            <legend className="text-xs font-medium text-gray-600 mb-2">
+              <span aria-hidden="true">📋 </span>Incidències
+            </legend>
 
-            {/* Toggle: mostrar tancades */}
             <label className="flex items-center gap-2 mb-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -54,9 +56,10 @@ function ControlsCapes({ filtres, onCanviFiltres }) {
               </span>
             </label>
 
-            {/* Filtre per prioritat */}
-            <p className="text-xs text-gray-500 mb-1.5">Filtrar per prioritat:</p>
-            <div className="flex flex-wrap gap-1.5">
+            <p className="text-xs text-gray-500 mb-1.5" id="label-prioritat-mapa">
+              Filtrar per prioritat:
+            </p>
+            <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-labelledby="label-prioritat-mapa">
               {[
                 { valor: 'totes', etiqueta: 'Totes', color: 'bg-gray-100 text-gray-700' },
                 { valor: 'critica', etiqueta: 'Crítica', color: 'bg-red-100 text-red-700' },
@@ -78,21 +81,23 @@ function ControlsCapes({ filtres, onCanviFiltres }) {
                           ? `${color} ring-2 ring-offset-1 ring-blue-400`
                           : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
                       }`}
+                    role="radio"
+                    aria-checked={actiu}
+                    aria-label={`Filtrar per prioritat ${etiqueta}`}
                   >
                     {etiqueta}
                   </button>
                 );
               })}
             </div>
-          </div>
+          </fieldset>
 
-          {/* ── Indicatius ───────────────────────── */}
-          <div className="mb-4">
-            <p className="text-xs font-medium text-gray-600 mb-2">
-              🚔 Patrulles
-            </p>
+          {/* Indicatius */}
+          <fieldset className="mb-4">
+            <legend className="text-xs font-medium text-gray-600 mb-2">
+              <span aria-hidden="true">🚔 </span>Patrulles
+            </legend>
 
-            {/* Toggle: mostrar no disponibles */}
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -110,9 +115,8 @@ function ControlsCapes({ filtres, onCanviFiltres }) {
                 Mostrar no disponibles
               </span>
             </label>
-          </div>
+          </fieldset>
 
-          {/* ── Separador ────────────────────────── */}
           <div className="border-t border-gray-200 pt-3">
             <p className="text-xs text-gray-400 text-center">
               Els filtres s'apliquen al mapa en temps real

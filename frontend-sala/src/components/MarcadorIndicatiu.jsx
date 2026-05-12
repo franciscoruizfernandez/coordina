@@ -1,5 +1,5 @@
+import { memo, useRef, useCallback } from "react";
 import { Marker, Popup, Tooltip } from "react-leaflet";
-import { useRef } from "react";
 import L from "leaflet";
 
 const obtenirColorEstat = (estat) => {
@@ -57,7 +57,12 @@ const crearIconaIndicatiu = (estat, seleccionat = false) => {
   });
 };
 
-function MarcadorIndicatiu({ indicatiu, onSeleccionar, seleccionat = false }) {
+// ─── memo: només es rerenderitza si canvien les props ───────
+const MarcadorIndicatiu = memo(function MarcadorIndicatiu({
+  indicatiu,
+  onSeleccionar,
+  seleccionat = false,
+}) {
   const markerRef = useRef(null);
 
   if (indicatiu.ubicacio_lat == null || indicatiu.ubicacio_lon == null) return null;
@@ -70,17 +75,13 @@ function MarcadorIndicatiu({ indicatiu, onSeleccionar, seleccionat = false }) {
   const icona = crearIconaIndicatiu(indicatiu.estat_operatiu, seleccionat);
   const color = obtenirColorEstat(indicatiu.estat_operatiu);
 
-  const handleVeureDetalls = () => {
+  const handleVeureDetalls = useCallback(() => {
     markerRef.current?.closePopup();
     onSeleccionar?.(indicatiu);
-  };
+  }, [indicatiu, onSeleccionar]);
 
   return (
-    <Marker
-      ref={markerRef}
-      position={posicio}
-      icon={icona}
-    >
+    <Marker ref={markerRef} position={posicio} icon={icona}>
       <Tooltip direction="top" offset={[0, -10]}>
         <span className="font-bold">{indicatiu.codi}</span>
       </Tooltip>
@@ -127,6 +128,6 @@ function MarcadorIndicatiu({ indicatiu, onSeleccionar, seleccionat = false }) {
       </Popup>
     </Marker>
   );
-}
+});
 
 export default MarcadorIndicatiu;
