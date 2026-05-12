@@ -1,40 +1,46 @@
+import { useMemo } from "react";
 import {
   MapContainer,
   TileLayer,
   ZoomControl,
   ScaleControl,
+  useMap,
 } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import MarcadorIncidencia from "./MarcadorIncidencia";
 import MarcadorIndicatiu from "./MarcadorIndicatiu";
+import ControlsCapes from "./ControlsCapes";
 import "leaflet/dist/leaflet.css";
 
-// ─── Crear icona personalitzada per als clusters ────────────
+// ─── Centre i zoom per defecte ──────────────────────────────
+const CENTRE_INICIAL = [41.60, 2.30];
+const ZOOM_INICIAL = 10;
+
+// ─── Icona personalitzada per als clusters ──────────────────
 const crearIconaCluster = (cluster) => {
   const count = cluster.getChildCount();
 
-  // Determinar mida i color segons el nombre d'incidències
   let mida, color, borderColor, fontSize;
 
   if (count < 5) {
     mida = 40;
-    color = "rgba(59, 130, 246, 0.85)";      // blau
+    color = "rgba(59, 130, 246, 0.85)";
     borderColor = "rgba(59, 130, 246, 0.4)";
     fontSize = 14;
   } else if (count < 15) {
     mida = 48;
-    color = "rgba(245, 158, 11, 0.85)";      // taronja
+    color = "rgba(245, 158, 11, 0.85)";
     borderColor = "rgba(245, 158, 11, 0.4)";
     fontSize = 15;
   } else if (count < 30) {
     mida = 54;
-    color = "rgba(239, 68, 68, 0.85)";       // vermell
+    color = "rgba(239, 68, 68, 0.85)";
     borderColor = "rgba(239, 68, 68, 0.4)";
     fontSize = 16;
   } else {
     mida = 60;
-    color = "rgba(127, 29, 29, 0.9)";        // vermell fosc
+    color = "rgba(127, 29, 29, 0.9)";
     borderColor = "rgba(127, 29, 29, 0.4)";
     fontSize = 17;
   }
@@ -66,6 +72,25 @@ const crearIconaCluster = (cluster) => {
   });
 };
 
+// ─── Component intern: botó centrar mapa ────────────────────
+function BotoCentrar() {
+  const mapa = useMap();
+
+  return (
+    <button
+      onClick={() => mapa.setView(CENTRE_INICIAL, ZOOM_INICIAL)}
+      className="absolute bottom-12 right-3 z-[1000] bg-white rounded-lg
+                 shadow-lg border border-gray-200 px-3 py-2 text-sm
+                 font-medium text-gray-700 hover:bg-gray-50
+                 transition-colors flex items-center gap-1"
+      title="Centrar mapa a la posició inicial"
+    >
+      🎯 Centrar
+    </button>
+  );
+}
+
+// ─── Component principal ────────────────────────────────────
 function Mapa({
   incidencies = [],
   indicatius = [],
@@ -73,57 +98,103 @@ function Mapa({
   onSeleccionarIndicatiu,
   incidenciaSeleccionada = null,
   indicatiuSeleccionat = null,
+  filtres = {},
+  onCanviFiltres,
 }) {
-  const centre = [41.60, 2.30];
-  const zoomInicial = 10;
+  // ─── Filtrar incidències segons els controls ────────────────
+  const incidenciesFiltrades = useMemo(() => {
+    let resultat = [...incidencies];
+
+    // Filtrar tancades/resoltes
+    if (!filtres.mostrarTancades) {
+      resultat = resultat.filter(
+        (inc) => inc.estat !== 'tancada' && inc.estat !== 'resolta'
+      );
+    }
+
+    // Filtrar per prioritat
+    if (filtres.prioritatMapa && filtres.prioritatMapa !== 'totes') {
+      resultat = resultat.filter(
+        (inc) => inc.prioritat === filtres.prioritatMapa
+      );
+    }
+
+    return resultat;
+  }, [incidencies, filtres.mostrarTancades, filtres.prioritatMapa]);
+
+  // ─── Filtrar indicatius segons els controls ─────────────────
+  const indicatiusFiltrats = useMemo(() => {
+    let resultat = [...indicatius];
+
+    // Filtrar no disponibles
+    if (!filtres.mostrarNoDisponibles) {
+      resultat = resultat.filter(
+        (ind) => ind.estat_operatiu !== 'no_disponible'
+      );
+    }
+
+    return resultat;
+  }, [indicatius, filtres.mostrarNoDisponibles]);
 
   return (
-    <MapContainer
-      center={centre}
-      zoom={zoomInicial}
-      style={{ height: "calc(100vh - 64px)", width: "100%" }}
-      zoomControl={false}
-      scrollWheelZoom={true}
-    >
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution="&copy; OpenStreetMap"
-        maxZoom={18}
-        minZoom={10}
-      />
+    <div className="relative w-full h-full">
+      {/* ─── Controls de capes ──────────────────── */}
+      {onCanviFiltres && (
+        <ControlsCapes
+          filtres={filtres}
+          onCanviFiltres={onCanviFiltres}
+        />
+      )}
 
-      <ZoomControl position="topright" />
-      <ScaleControl position="bottomleft" imperial={false} />
-
-      {/* Incidències agrupades amb clustering personalitzat */}
-      <MarkerClusterGroup
-        chunkedLoading
-        maxClusterRadius={50}
-        showCoverageOnHover={false}
-        spiderfyOnMaxZoom={true}
-        zoomToBoundsOnClick={true}
-        iconCreateFunction={crearIconaCluster}
+      {/* ─── Mapa ──────────────────────────────── */}
+      <MapContainer
+        center={CENTRE_INICIAL}
+        zoom={ZOOM_INICIAL}
+        style={{ height: "100%", width: "100%" }}
+        zoomControl={false}
+        scrollWheelZoom={true}
       >
-        {incidencies.map((incidencia) => (
-          <MarcadorIncidencia
-            key={incidencia.id}
-            incidencia={incidencia}
-            onSeleccionar={onSeleccionarIncidencia}
-            seleccionat={incidenciaSeleccionada?.id === incidencia.id}
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="&copy; OpenStreetMap"
+          maxZoom={18}
+          minZoom={10}
+        />
+
+        <ZoomControl position="topright" />
+        <ScaleControl position="bottomleft" imperial={false} />
+        <BotoCentrar />
+
+        {/* Incidències amb clustering */}
+        <MarkerClusterGroup
+          chunkedLoading
+          maxClusterRadius={50}
+          showCoverageOnHover={false}
+          spiderfyOnMaxZoom={true}
+          zoomToBoundsOnClick={true}
+          iconCreateFunction={crearIconaCluster}
+        >
+          {incidenciesFiltrades.map((incidencia) => (
+            <MarcadorIncidencia
+              key={incidencia.id}
+              incidencia={incidencia}
+              onSeleccionar={onSeleccionarIncidencia}
+              seleccionat={incidenciaSeleccionada?.id === incidencia.id}
+            />
+          ))}
+        </MarkerClusterGroup>
+
+        {/* Indicatius sense clustering */}
+        {indicatiusFiltrats.map((indicatiu) => (
+          <MarcadorIndicatiu
+            key={indicatiu.id}
+            indicatiu={indicatiu}
+            onSeleccionar={onSeleccionarIndicatiu}
+            seleccionat={indicatiuSeleccionat?.id === indicatiu.id}
           />
         ))}
-      </MarkerClusterGroup>
-
-      {/* Indicatius sense clustering */}
-      {indicatius.map((indicatiu) => (
-        <MarcadorIndicatiu
-          key={indicatiu.id}
-          indicatiu={indicatiu}
-          onSeleccionar={onSeleccionarIndicatiu}
-          seleccionat={indicatiuSeleccionat?.id === indicatiu.id}
-        />
-      ))}
-    </MapContainer>
+      </MapContainer>
+    </div>
   );
 }
 

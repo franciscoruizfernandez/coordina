@@ -21,6 +21,13 @@ function Dashboard() {
   const [carregant, setCarregant] = useState(true);
   const [error, setError] = useState(null);
 
+  // ─── Filtres del mapa ──────────────────────────────────────
+  const [filtresMapa, setFiltresMapa] = useState({
+    mostrarTancades: false,
+    mostrarNoDisponibles: true,
+    prioritatMapa: 'totes',
+  });
+
   useEffect(() => {
     async function carregar() {
       try {
@@ -185,6 +192,8 @@ function Dashboard() {
           onSeleccionarIndicatiu={handleSeleccionarIndicatiu}
           incidenciaSeleccionada={incidenciaSeleccionada}
           indicatiuSeleccionat={indicatiuSeleccionat}
+          filtres={filtresMapa}
+          onCanviFiltres={setFiltresMapa}
         />
       </div>
 
