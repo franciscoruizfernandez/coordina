@@ -19,9 +19,6 @@ function Layout() {
   return (
     <div className="h-screen flex flex-col">
       {/* Skip link per saltar directament al contingut */}
-      <a href="#contingut-principal" className="skip-link">
-        Saltar al contingut principal
-      </a>
 
       <header
         className="bg-gray-800 text-white p-4 flex justify-between items-center"
@@ -68,7 +65,7 @@ function Layout() {
         )}
       </header>
 
-      <main id="contingut-principal" className="flex-1" role="main">
+      <main className="flex-1 overflow-hidden" role="main">
         <Outlet />
       </main>
     </div>

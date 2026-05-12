@@ -189,7 +189,7 @@ function Dashboard() {
   const hiHaDetallObert = incidenciaSeleccionada || indicatiuSeleccionat;
 
   return (
-    <div className="relative h-screen overflow-hidden bg-gray-100">
+    <div className="relative h-full overflow-hidden bg-gray-100">
 
       {/* ══ DESKTOP ══ */}
       <div className="hidden lg:flex h-full overflow-hidden">
