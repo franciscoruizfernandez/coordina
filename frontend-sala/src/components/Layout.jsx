@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { SocketContext } from "../context/SocketContext";
@@ -8,6 +8,10 @@ function Layout() {
   const { dispatch, usuari } = useContext(AuthContext);
   const { connectat } = useContext(SocketContext);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const esAdmin = usuari?.rol === 'administrador';
+  const esPaginaAdmin = location.pathname === '/admin';
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -53,6 +57,19 @@ function Layout() {
             <span className="text-sm" aria-label={`Usuari: ${usuari.username}, Rol: ${usuari.rol}`}>
               {usuari.username} ({usuari.rol})
             </span>
+
+            {/* Botó admin / dashboard segons la pàgina actual */}
+            {esAdmin && (
+              <button
+                onClick={() => navigate(esPaginaAdmin ? '/' : '/admin')}
+                className="bg-gray-600 px-3 py-1 rounded hover:bg-gray-500 text-sm
+                           transition-colors flex items-center gap-1"
+                aria-label={esPaginaAdmin ? 'Anar al dashboard' : 'Panell d\'administració'}
+              >
+                {esPaginaAdmin ? '🗺️ Dashboard' : '⚙️ Admin'}
+              </button>
+            )}
+
             <button
               onClick={handleLogout}
               className="bg-red-600 px-3 py-1 rounded hover:bg-red-700 text-sm

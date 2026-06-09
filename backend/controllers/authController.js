@@ -161,3 +161,19 @@ export const logout = async (req, res) => {
     missatge: 'Logout correcte. Elimina el token del client.',
   });
 };
+
+// ==============================================================
+// LLISTAR USUARIS (només admin)
+// ==============================================================
+export const llistarUsuaris = async (req, res, next) => {
+  try {
+    const usuaris = await Usuari.llistarTots();
+    res.json({
+      exit: true,
+      dades: usuaris,
+    });
+  } catch (error) {
+    console.error('❌ Error llistant usuaris:', error);
+    next(error);
+  }
+};

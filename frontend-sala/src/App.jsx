@@ -3,6 +3,7 @@ import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
+import DashboardAdmin from "./pages/DashboardAdmin";
 import NotFound from "./pages/NotFound";
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
           }
         >
           <Route index element={<Dashboard />} />
+          <Route path="admin" element={<DashboardAdmin />} />
         </Route>
 
         <Route path="/login" element={<Login />} />

@@ -513,16 +513,40 @@ async function simularMoviment() {
     const indicatius = await obtenirIndicatius();
 
     for (const indicatiu of indicatius) {
-      const latActual = parseFloat(indicatiu.ubicacio_lat);
-      const lonActual = parseFloat(indicatiu.ubicacio_lon);
+      let latActual = parseFloat(indicatiu.ubicacio_lat);
+      let lonActual = parseFloat(indicatiu.ubicacio_lon);
+
+      // Si l'indicatiu no té coordenades vàlides, assignar-ne unes
+      // aleatòries dins de la RPMN per inicialitzar-lo al mapa
 
       if (
         isNaN(latActual) || isNaN(lonActual) ||
         latActual < -90  || latActual > 90   ||
         lonActual < -180 || lonActual > 180
       ) {
-        console.log(`   ${indicatiu.codi}: coordenades invalides, ignorat`);
-        continue;
+        // Límits de la Regió Policial Metropolitana Nord
+        const LAT_MIN = 41.41;
+        const LAT_MAX = 41.75;
+        const LON_MIN = 1.97;
+        const LON_MAX = 2.77;
+
+        latActual = parseFloat((LAT_MIN + Math.random() * (LAT_MAX - LAT_MIN)).toFixed(6));
+        lonActual = parseFloat((LON_MIN + Math.random() * (LON_MAX - LON_MIN)).toFixed(6));
+
+        console.log(
+          `   ${indicatiu.codi}: sense coordenades → assignades aleatòriament ` +
+          `(${latActual}, ${lonActual})`
+        );
+
+        try {
+          await actualitzarGPS(indicatiu.id, latActual, lonActual);
+        } catch (err) {
+          console.error(
+            `   Error assignant GPS inicial a ${indicatiu.codi}:`,
+            err.response?.data || err.message
+          );
+          continue;
+        }
       }
 
       const estat = getEstat(indicatiu.id);

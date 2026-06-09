@@ -6,6 +6,7 @@ import {
   login,
   verificarToken,
   logout,
+  llistarUsuaris,
 } from '../controllers/authController.js';
 import { verificarAuth } from '../middleware/authMiddleware.js';
 import { nomesSiAdmin } from '../middleware/roleMiddleware.js';
@@ -48,5 +49,8 @@ router.get('/verify', verificarAuth, verificarToken);
 
 // POST /api/auth/logout - Tancar sessió
 router.post('/logout', verificarAuth, logout);
+
+// GET /api/auth/usuaris - Llistar tots els usuaris (només admin)
+router.get('/usuaris', verificarAuth, nomesSiAdmin, llistarUsuaris);
 
 export default router;
