@@ -12,7 +12,9 @@ import L from "leaflet";
 import MarcadorIncidencia from "./MarcadorIncidencia";
 import MarcadorIndicatiu from "./MarcadorIndicatiu";
 import ControlsCapes from "./ControlsCapes";
+import SelectorModeAssignacio from "./SelectorModeAssignacio";
 import "leaflet/dist/leaflet.css";
+
 
 // ─── Centre i zoom per defecte ──────────────────────────────
 const CENTRE_INICIAL = [41.60, 2.30];
@@ -216,6 +218,9 @@ function Mapa({
           onCanviFiltres={onCanviFiltres}
         />
       )}
+      
+      {/* ─── Selector mode assignació (centrat) ── */}
+      <SelectorModeAssignacio />
 
       {/* ─── Mapa ──────────────────────────────── */}
       <MapContainer

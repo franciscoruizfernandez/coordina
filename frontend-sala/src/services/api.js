@@ -226,4 +226,16 @@ export const getTotsStreams = async () => {
   return response.data;
 };
 
+// ================= CONFIGURACIÓ =================
+
+export const obtenirModeAssignacio = async () => {
+  const response = await api.get("/configuracio/mode");
+  return response.data;
+};
+
+export const establirModeAssignacio = async (mode) => {
+  const response = await api.put("/configuracio/mode", { mode });
+  return response.data;
+};
+
 export default api;
