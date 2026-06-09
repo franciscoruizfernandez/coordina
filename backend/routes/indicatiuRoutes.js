@@ -22,6 +22,10 @@ import {
   qualsevolRol,
   nomesSiPatrulla,
 } from '../middleware/roleMiddleware.js';
+import {
+  validarActualitzarGPS,
+  validarCanviarEstatIndicatiu,
+} from '../middleware/validacions.js';
 
 const router = express.Router();
 
@@ -68,10 +72,10 @@ router.get('/:id', qualsevolRol, obtenirIndicatiu);
 
 // PATCH /api/indicatius/:id/ubicacio - Actualitzar GPS
 // Accessible per patrulles (enviament automàtic) i operadors
-router.patch('/:id/ubicacio', qualsevolRol, actualitzarUbicacio);
+router.patch('/:id/ubicacio', qualsevolRol, validarActualitzarGPS, actualitzarUbicacio);
 
 // PATCH /api/indicatius/:id/estat - Canviar estat operatiu
-router.patch('/:id/estat', qualsevolRol, canviarEstatIndicatiu);
+router.patch('/:id/estat', qualsevolRol, validarCanviarEstatIndicatiu, canviarEstatIndicatiu);
 
 // GET /api/indicatius/:id/historial - Historial
 router.get('/:id/historial', nomesSiOperadorOAdmin, obtenirHistorialIndicatiu);

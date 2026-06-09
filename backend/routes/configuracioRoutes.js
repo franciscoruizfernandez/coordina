@@ -4,6 +4,7 @@ import express from 'express';
 import { obtenirMode, establirMode } from '../controllers/configuracioController.js';
 import { verificarAuth } from '../middleware/authMiddleware.js';
 import { nomesSiOperadorOAdmin } from '../middleware/roleMiddleware.js';
+import { validarCanviarMode } from '../middleware/validacions.js';
 
 const router = express.Router();
 
@@ -18,6 +19,6 @@ router.use(verificarAuth);
 router.get('/mode', nomesSiOperadorOAdmin, obtenirMode);
 
 // PUT /api/configuracio/mode — Canviar mode
-router.put('/mode', nomesSiOperadorOAdmin, establirMode);
+router.put('/mode', nomesSiOperadorOAdmin, validarCanviarMode, establirMode);
 
 export default router;

@@ -14,6 +14,10 @@ import {
   nomesSiOperadorOAdmin,
   qualsevolRol,
 } from '../middleware/roleMiddleware.js';
+import {
+  validarAssignacioManual,
+  validarAssignacioAutomatica,
+} from '../middleware/validacions.js';
 
 const router = express.Router();
 
@@ -28,11 +32,11 @@ router.use(verificarAuth);
 router.get('/activa', qualsevolRol, obtenirAssignacioActiva);
 
 // POST /api/assignacions - Assignació manual
-router.post('/', nomesSiOperadorOAdmin, crearAssignacioManual);
+router.post('/', nomesSiOperadorOAdmin, validarAssignacioManual, crearAssignacioManual);
 
 // POST /api/assignacions/automatica - Assignació automàtica (Haversine)
 // IMPORTANT: Va ABANS de /:id per evitar conflictes
-router.post('/automatica', nomesSiOperadorOAdmin, crearAssignacioAutomatica);
+router.post('/automatica', nomesSiOperadorOAdmin, validarAssignacioAutomatica, crearAssignacioAutomatica);
 
 // PATCH /api/assignacions/:id/acceptar - Patrulla accepta
 router.patch('/:id/acceptar', qualsevolRol, acceptarAssignacio);

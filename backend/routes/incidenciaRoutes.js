@@ -16,6 +16,11 @@ import {
   nomesSiOperadorOAdmin,
   qualsevolRol,
 } from '../middleware/roleMiddleware.js';
+import {
+  validarCrearIncidencia,
+  validarActualitzarIncidencia,
+  validarCanviarEstatIncidencia,
+} from '../middleware/validacions.js';
 
 const router = express.Router();
 
@@ -37,13 +42,13 @@ router.get('/', nomesSiOperadorOAdmin, llistarIncidencies);
 router.get('/:id', qualsevolRol, obtenirIncidencia);
 
 // POST /api/incidencies - Crear (simula 112)
-router.post('/', nomesSiOperadorOAdmin, crearIncidencia);
+router.post('/', nomesSiOperadorOAdmin, validarCrearIncidencia, crearIncidencia);
 
 // PUT /api/incidencies/:id - Actualització completa
-router.put('/:id', nomesSiOperadorOAdmin, actualitzarIncidencia);
+router.put('/:id', nomesSiOperadorOAdmin, validarActualitzarIncidencia, actualitzarIncidencia);
 
 // PATCH /api/incidencies/:id/estat - Canviar estat
-router.patch('/:id/estat', nomesSiOperadorOAdmin, canviarEstatIncidencia);
+router.patch('/:id/estat', nomesSiOperadorOAdmin, validarCanviarEstatIncidencia, canviarEstatIncidencia);
 
 // DELETE /api/incidencies/:id - Tancament (soft delete)
 router.delete('/:id', nomesSiOperadorOAdmin, tancarIncidencia);

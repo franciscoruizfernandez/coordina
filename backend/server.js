@@ -3,6 +3,8 @@ import express from 'express';
 import { createServer } from 'http';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { testConnection } from './config/database.js';
 import { inicialitzarSocketIO, setIOInstance } from './sockets/socketManager.js';
 
@@ -48,6 +50,30 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
+// ==============================================================
+// SEGURETAT HTTP — Helmet.js
+// Afegeix headers de seguretat a totes les respostes
+// ==============================================================
+app.use(helmet());
+
+// ==============================================================
+// RATE LIMITING GLOBAL
+// Màxim 100 peticions per IP cada 15 minuts
+// Protegeix contra atacs de denegació de servei (DoS)
+// ==============================================================
+const limitadorGlobal = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minuts
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: true,
+    missatge: 'Massa peticions des d\'aquesta IP. Torna-ho a intentar en 15 minuts.',
+  },
+});
+
+app.use('/api', limitadorGlobal);
 
 // ==============================================================
 // MIDDLEWARE
