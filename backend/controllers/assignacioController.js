@@ -8,6 +8,8 @@ import { trobarMesProper } from '../utils/haversine.js';
 import { emetreIncidenciaAssignada } from '../sockets/emissors.js';
 import { calcularRutesMultiples } from '../utils/osrm.js'
 
+import { intentarAutoassignarPendents } from '../services/autoassignacioService.js';
+
 // Helper de traçabilitat
 const registrarEsdeveniment = async (tipus, usuariId, incidenciaId, indicatiuId, descripcio, dades = {}) => {
   try {
@@ -398,6 +400,11 @@ export const finalitzarAssignacio = async (req, res, next) => {
       }
     );
 
+    // En mode automàtic, intentar assignar pendents de forma asíncrona
+    intentarAutoassignarPendents().catch((err) => {
+      console.error('❌ [Auto] Error intentant assignar pendents post-finalització:', err.message);
+    });
+
     res.json({
       exit: true,
       missatge: `Assignació finalitzada. Indicatiu ${assignacio.indicatiu_codi} tornat a disponible.`,
@@ -450,6 +457,11 @@ export const cancellarAssignacio = async (req, res, next) => {
       `Assignació cancel·lada per l'operador`,
       { indicatiu_codi: assignacio.indicatiu_codi }
     );
+
+    // En mode automàtic, intentar reassignar la incidència alliberada
+    intentarAutoassignarPendents().catch((err) => {
+      console.error('❌ [Auto] Error intentant assignar pendents post-cancel·lació:', err.message);
+    });
 
     res.json({
       exit: true,

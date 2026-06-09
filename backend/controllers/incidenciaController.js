@@ -9,6 +9,8 @@ import {
   emetreCanviEstatIncidencia,
 } from '../sockets/emissors.js'; 
 
+import { intentarAutoassignarIncidencia } from '../services/autoassignacioService.js';
+
 // ==============================================================
 // HELPER INTERN: Registrar traçabilitat
 // No llança error si falla (no bloqueja el flux principal)
@@ -243,6 +245,12 @@ export const crearIncidencia = async (req, res, next) => {
     // EMETRE EVENT WEBSOCKET
     emetreNovaIncidencia(novaIncidencia);
 
+    // En mode automàtic, intentar autoassignar de forma asíncrona
+    // No bloqueja la resposta HTTP — si falla, no afecta la creació
+    intentarAutoassignarIncidencia(novaIncidencia.id).catch((err) => {
+      console.error('❌ [Auto] Error intentant autoassignar nova incidència:', err.message);
+    });
+
     res.status(201).json({
       exit: true,
       missatge: 'Incidència creada correctament',
@@ -452,7 +460,7 @@ export const canviarEstatIncidencia = async (req, res, next) => {
       { estat_anterior: estatActual, estat_nou: estat }
     );
 
-    // 🆕 EMETRE EVENT WEBSOCKET
+    // EMETRE EVENT WEBSOCKET
     emetreCanviEstatIncidencia(id, estatActual, estat);
 
     res.json({

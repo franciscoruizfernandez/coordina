@@ -18,6 +18,7 @@ import assignacioRoutes   from './routes/assignacioRoutes.js';
 import tracabilitatRoutes from './routes/tracabilitatRoutes.js';
 import missatgeRoutes from './routes/missatgeRoutes.js';
 import streamRoutes from './routes/streamRoutes.js';
+import configuracioRoutes from './routes/configuracioRoutes.js';
 
 dotenv.config();
 
@@ -88,7 +89,8 @@ app.get('/', (req, res) => {
       assignacions: '/api/assignacions',
       tracabilitat: '/api/tracabilitat',
       missatges: '/api/missatges',
-      stremas: '/api/streams',
+      streams: '/api/streams',
+      configuracio: '/api/configuracio',
     },
   });
 });
@@ -103,6 +105,7 @@ app.use('/api/assignacions',  assignacioRoutes);
 app.use('/api/tracabilitat',  tracabilitatRoutes);
 app.use('/api/missatges', missatgeRoutes);
 app.use('/api/streams', streamRoutes);
+app.use('/api/configuracio', configuracioRoutes);
 
 // ==============================================================
 // RUTES DE TEST (es mantenen)
@@ -196,6 +199,7 @@ const startServer = async () => {
       console.log('  /api/indicatius');
       console.log('  /api/assignacions');
       console.log('  /api/tracabilitat');
+      console.log('  /api/configuracio');
       console.log('  [WS] Socket.io → Temps real');
       console.log('='.repeat(50));
     });

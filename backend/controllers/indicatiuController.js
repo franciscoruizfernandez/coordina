@@ -8,6 +8,8 @@ import {
   emetreCanviEstatIndicatiu,
 } from '../sockets/emissors.js';
 
+import { intentarAutoassignarPendents } from '../services/autoassignacioService.js';
+
 // Helper de traçabilitat intern
 const registrarEsdeveniment = async (tipus, usuariId, incidenciaId, indicatiuId, descripcio, dades = {}) => {
   try {
@@ -310,6 +312,14 @@ export const canviarEstatIndicatiu = async (req, res, next) => {
 
     // EMETRE EVENT WEBSOCKET
     emetreCanviEstatIndicatiu(id, estatAnterior, estat_operatiu);
+
+    // En mode automàtic, si l'indicatiu passa a disponible
+    // intentar assignar incidències pendents de forma asíncrona
+    if (estat_operatiu === 'disponible' && estatAnterior !== 'disponible') {
+      intentarAutoassignarPendents().catch((err) => {
+        console.error('❌ [Auto] Error intentant assignar pendents:', err.message);
+      });
+    }
 
     res.json({
       exit: true,
