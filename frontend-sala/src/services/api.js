@@ -238,4 +238,11 @@ export const establirModeAssignacio = async (mode) => {
   return response.data;
 };
 
+// ================= ASSIGNACIONS ACTIVES PER INCIDÈNCIA =================
+
+export const getIndicatiusActiusPerIncidencia = async (incidenciaId) => {
+  const response = await api.get(`/assignacions/activa?incidencia_id=${incidenciaId}`);
+  return response.data;
+};
+
 export default api;

@@ -24,7 +24,7 @@ const etiquetaTipusUnitat = (tipus) => {
 }
 
 // ─── Component principal ─────────────────────────────────────
-function ModalAssignacioManual({ incidencia, onTancar, onAssignat }) {
+function ModalAssignacioManual({ incidencia, onTancar, onAssignat, esReforc = false }) {
   const [indicatius, setIndicatius] = useState([])
   const [carregant, setCarregant]   = useState(true)
   const [assignant, setAssignant]   = useState(false)
@@ -133,10 +133,13 @@ function ModalAssignacioManual({ incidencia, onTancar, onAssignat }) {
         <div className="flex items-center justify-between p-4 border-b">
           <div>
             <h2 className="text-lg font-bold text-gray-800">
-              Assignació Manual
+              {esReforc ? '🔰 Afegir Reforç' : '👮 Assignació Manual'}
             </h2>
             <p className="text-sm text-gray-500">
-              Ordenats per temps d'arribada estimat
+              {esReforc
+                ? 'Selecciona una patrulla addicional per a aquesta incidència'
+                : 'Ordenats per temps d\'arribada estimat'
+              }
             </p>
           </div>
           <button

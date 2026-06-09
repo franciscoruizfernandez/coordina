@@ -7,6 +7,7 @@ import {
   getHistorialIncidencia,
   canviarEstatIncidencia,
   assignacioAutomatica,
+  getIndicatiusActiusPerIncidencia,
 } from '../services/api';
 import ModalAssignacioManual from './ModalAssignacioManual';
 import VideoPlayer from './VideoPlayer';
@@ -49,26 +50,28 @@ const ETIQUETA_ESTAT = {
 };
 
 const ICONA_TIPUS_ESDEVENIMENT = {
-  creacio_incidencia:       '🆕',
-  modificacio_incidencia:   '✏️',
-  canvi_estat_incidencia:   '🔄',
-  assignacio_creada:        '📋',
-  assignacio_acceptada:     '✅',
-  assignacio_finalitzada:   '🏁',
-  assignacio_cancel_lada:   '❌',
-  tancament_incidencia:     '🔒',
-  default:                  '📌',
+  creacio_incidencia:     '🆕',
+  modificacio_incidencia: '✏️',
+  canvi_estat_incidencia: '🔄',
+  assignacio_creada:      '📋',
+  assignacio_acceptada:   '✅',
+  assignacio_finalitzada: '🏁',
+  assignacio_cancel_lada: '❌',
+  tancament_incidencia:   '🔒',
+  default:                '📌',
+};
+
+const ETIQUETA_TIPUS_UNITAT = {
+  cotxe:     '🚔 Cotxe',
+  moto:      '🏍️ Moto',
+  furgoneta: '🚐 Furgoneta',
 };
 
 const formatarData = (timestamp) => {
   if (!timestamp) return '—';
   return new Date(timestamp).toLocaleString('ca-ES', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
   });
 };
 
@@ -86,14 +89,9 @@ const FilaHistorial = memo(function FilaHistorial({ event }) {
         {icona}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs text-gray-700 leading-snug">
-          {event.descripcio}
-        </p>
+        <p className="text-xs text-gray-700 leading-snug">{event.descripcio}</p>
         <p className="text-xs text-gray-400 mt-0.5">
-          <TempsRelatiu
-            timestamp={event.timestamp}
-            className="text-gray-400"
-          />
+          <TempsRelatiu timestamp={event.timestamp} className="text-gray-400" />
           <span className="ml-1">— {formatarData(event.timestamp)}</span>
         </p>
       </div>
@@ -120,25 +118,77 @@ const BadgeEstat = memo(function BadgeEstat({ estat }) {
   );
 });
 
+// ── Tarjeta d'un indicatiu assignat ──────────────────────────
+const TarjetaIndicatiuAssignat = memo(function TarjetaIndicatiuAssignat({ indicatiu }) {
+  const esReforc    = indicatiu.tipus_assignacio === 'reforc';
+  const haAcceptat  = !!indicatiu.timestamp_acceptacio;
+
+  return (
+    <div className={`flex items-center justify-between p-2.5 rounded-lg border
+      ${esReforc
+        ? 'bg-orange-50 border-orange-200'
+        : 'bg-blue-50 border-blue-200'
+      }`}
+    >
+      <div className="flex items-center gap-2 min-w-0">
+        <span className="text-base flex-shrink-0">
+          {ETIQUETA_TIPUS_UNITAT[indicatiu.tipus_unitat]?.split(' ')[0] || '🚔'}
+        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-gray-800 truncate">
+            {indicatiu.codi}
+          </p>
+          <p className="text-xs text-gray-500">
+            {ETIQUETA_TIPUS_UNITAT[indicatiu.tipus_unitat] || indicatiu.tipus_unitat}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        {/* Badge principal / reforç */}
+        <span className={`px-1.5 py-0.5 rounded text-xs font-medium
+          ${esReforc
+            ? 'bg-orange-100 text-orange-700'
+            : 'bg-blue-100 text-blue-700'
+          }`}
+        >
+          {esReforc ? '🔰 Reforç' : '⭐ Principal'}
+        </span>
+
+        {/* Badge acceptació */}
+        <span className={`px-1.5 py-0.5 rounded text-xs font-medium
+          ${haAcceptat
+            ? 'bg-green-100 text-green-700'
+            : 'bg-gray-100 text-gray-500'
+          }`}
+        >
+          {haAcceptat ? '✅' : '⏳'}
+        </span>
+      </div>
+    </div>
+  );
+});
+
 // =====================================================
 // COMPONENT PRINCIPAL
 // =====================================================
 
 function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
-  const [detall, setDetall]                         = useState(null);
-  const [historial, setHistorial]                   = useState([]);
-  const [carregantDetall, setCarregantDetall]       = useState(true);
-  const [carregantHistorial, setCarregantHistorial] = useState(true);
-  const [error, setError]                           = useState(null);
-  const [canviantEstat, setCanviantEstat]           = useState(false);
-  const [assignantAuto, setAssignantAuto]           = useState(false);
-  const [mostrarModalManual, setMostrarModalManual] = useState(false);
-  const [streamAmpliat, setStreamAmpliat]           = useState(null);
+  const [detall, setDetall]                           = useState(null);
+  const [historial, setHistorial]                     = useState([]);
+  const [indicatiusAssignats, setIndicatiusAssignats] = useState([]);
+  const [carregantDetall, setCarregantDetall]         = useState(true);
+  const [carregantHistorial, setCarregantHistorial]   = useState(true);
+  const [carregantIndicatius, setCarregantIndicatius] = useState(false);
+  const [error, setError]                             = useState(null);
+  const [canviantEstat, setCanviantEstat]             = useState(false);
+  const [assignantAuto, setAssignantAuto]             = useState(false);
+  const [mostrarModalManual, setMostrarModalManual]   = useState(false);
+  const [streamAmpliat, setStreamAmpliat]             = useState(null);
 
-  // ─── Carregar dades detallades ───────────────────────────────
+  // ─── Carregar detall ─────────────────────────────────────────
   const carregarDetall = useCallback(async () => {
     if (!incidencia?.id) return;
-
     try {
       setCarregantDetall(true);
       setError(null);
@@ -155,7 +205,6 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
   // ─── Carregar historial ──────────────────────────────────────
   const carregarHistorial = useCallback(async () => {
     if (!incidencia?.id) return;
-
     try {
       setCarregantHistorial(true);
       const resposta = await getHistorialIncidencia(incidencia.id);
@@ -168,12 +217,44 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
     }
   }, [incidencia?.id]);
 
+  // ─── Carregar indicatius assignats actius ────────────────────
+  const carregarIndicatiusAssignats = useCallback(async () => {
+    if (!incidencia?.id) return;
+    try {
+      setCarregantIndicatius(true);
+      const resposta = await getIndicatiusActiusPerIncidencia(incidencia.id);
+      // El backend retorna { exit, total, dades: [...] } o 404 si no n'hi ha
+      setIndicatiusAssignats(resposta.dades || []);
+    } catch (err) {
+      // 404 vol dir que no hi ha assignacions actives, no és un error real
+      if (err.response?.status === 404) {
+        setIndicatiusAssignats([]);
+      } else {
+        console.error('❌ Error carregant indicatius assignats:', err);
+        setIndicatiusAssignats([]);
+      }
+    } finally {
+      setCarregantIndicatius(false);
+    }
+  }, [incidencia?.id]);
+
   useEffect(() => {
     setDetall(null);
     setHistorial([]);
+    setIndicatiusAssignats([]);
     carregarDetall();
     carregarHistorial();
-  }, [incidencia?.id, carregarDetall, carregarHistorial]);
+    carregarIndicatiusAssignats();
+  }, [incidencia?.id, carregarDetall, carregarHistorial, carregarIndicatiusAssignats]);
+
+  // ─── Helpers de recàrrega agrupats ──────────────────────────
+  const recarregarTot = useCallback(async () => {
+    await Promise.all([
+      carregarDetall(),
+      carregarHistorial(),
+      carregarIndicatiusAssignats(),
+    ]);
+  }, [carregarDetall, carregarHistorial, carregarIndicatiusAssignats]);
 
   // ─── Accions ────────────────────────────────────────────────
   const handleCanviarEstat = useCallback(async (nouEstat) => {
@@ -181,8 +262,7 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
       setCanviantEstat(true);
       await canviarEstatIncidencia(incidencia.id, nouEstat);
       toast.success(`✅ Estat canviat a "${ETIQUETA_ESTAT[nouEstat]}" correctament`);
-      await carregarDetall();
-      await carregarHistorial();
+      await recarregarTot();
       if (onIncidenciaActualitzada) {
         onIncidenciaActualitzada(incidencia.id, { estat: nouEstat });
       }
@@ -192,7 +272,7 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
     } finally {
       setCanviantEstat(false);
     }
-  }, [incidencia?.id, carregarDetall, carregarHistorial, onIncidenciaActualitzada]);
+  }, [incidencia?.id, recarregarTot, onIncidenciaActualitzada]);
 
   const handleAssignacioAutomatica = useCallback(async () => {
     try {
@@ -201,8 +281,7 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
       toast.success(
         `⚡ Assignació automàtica: patrulla ${resposta.algorisme?.indicatiu_seleccionat || 'assignada'} (${resposta.algorisme?.distancia_km || '?'} km)`
       );
-      await carregarDetall();
-      await carregarHistorial();
+      await recarregarTot();
       if (onIncidenciaActualitzada) {
         onIncidenciaActualitzada(incidencia.id, { estat: 'assignada' });
       }
@@ -212,23 +291,23 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
     } finally {
       setAssignantAuto(false);
     }
-  }, [incidencia?.id, carregarDetall, carregarHistorial, onIncidenciaActualitzada]);
+  }, [incidencia?.id, recarregarTot, onIncidenciaActualitzada]);
 
   const handleAssignacioManualOk = useCallback(async () => {
     setMostrarModalManual(false);
     toast.success('👮 Assignació manual realitzada correctament');
-    await carregarDetall();
-    await carregarHistorial();
+    await recarregarTot();
     if (onIncidenciaActualitzada) {
       onIncidenciaActualitzada(incidencia.id, { estat: 'assignada' });
     }
-  }, [incidencia?.id, carregarDetall, carregarHistorial, onIncidenciaActualitzada]);
+  }, [incidencia?.id, recarregarTot, onIncidenciaActualitzada]);
 
   // ─── Dades a mostrar ────────────────────────────────────────
-  const inc = detall || incidencia;
+  const inc         = detall || incidencia;
   const estatActual = inc?.estat || 'nova';
   const transicions = TRANSICIONS_PERMESES[estatActual] || [];
-  const esTancada = estatActual === 'tancada';
+  const esTancada   = estatActual === 'tancada';
+  const esPotAssignar = ['nova', 'assignada', 'en_curs'].includes(estatActual);
 
   if (!inc) {
     return (
@@ -251,6 +330,12 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
               <div className="flex items-center gap-2 flex-wrap">
                 <BadgePrioritat prioritat={inc.prioritat} />
                 <BadgeEstat estat={inc.estat} />
+                {/* Badge avisos 112 si n'hi ha més d'un */}
+                {inc.num_avisos_112 > 1 && (
+                  <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                    📡 {inc.num_avisos_112} avisos 112
+                  </span>
+                )}
               </div>
               <h2 className="text-base font-bold text-gray-800 mt-2 capitalize">
                 {inc.tipologia}
@@ -341,6 +426,41 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
             )}
           </section>
 
+          {/* ── Patrulles assignades ── */}
+          <section className="p-4 border-b">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                Patrulles assignades
+              </h3>
+              {!carregantIndicatius && indicatiusAssignats.length > 0 && (
+                <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-semibold">
+                  {indicatiusAssignats.length}
+                </span>
+              )}
+            </div>
+
+            {carregantIndicatius ? (
+              <div className="space-y-2">
+                {[1, 2].map((i) => (
+                  <div key={i} className="h-12 bg-gray-100 rounded-lg animate-pulse" />
+                ))}
+              </div>
+            ) : indicatiusAssignats.length === 0 ? (
+              <div className="rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 p-3 text-center">
+                <p className="text-2xl mb-1">📭</p>
+                <p className="text-xs font-medium text-gray-500">
+                  Cap patrulla assignada
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {indicatiusAssignats.map((ind) => (
+                  <TarjetaIndicatiuAssignat key={ind.assignacio_id} indicatiu={ind} />
+                ))}
+              </div>
+            )}
+          </section>
+
           {/* ── Accions ── */}
           {!esTancada && (
             <section className="p-4 border-b">
@@ -349,7 +469,8 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
               </h3>
 
               <div className="space-y-2">
-                {estatActual === 'nova' && (
+                {/* Assignació automàtica: disponible si es pot assignar */}
+                {esPotAssignar && (
                   <button
                     onClick={handleAssignacioAutomatica}
                     disabled={assignantAuto || canviantEstat}
@@ -364,22 +485,30 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
                         <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         Cercant patrulla...
                       </>
+                    ) : indicatiusAssignats.length > 0 ? (
+                      <>⚡ Afegir patrulla automàticament</>
                     ) : (
                       <>⚡ Assignació automàtica</>
                     )}
                   </button>
                 )}
 
-                {estatActual === 'nova' && (
+                {/* Assignació manual: disponible si es pot assignar */}
+                {esPotAssignar && (
                   <button
                     onClick={() => setMostrarModalManual(true)}
                     disabled={assignantAuto || canviantEstat}
                     className="w-full py-2 px-3 rounded text-sm font-medium border border-blue-600 text-blue-600 hover:bg-blue-50 flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    👮 Assignar manualment
+                    {indicatiusAssignats.length > 0 ? (
+                      <>👮 Afegir patrulla manualment</>
+                    ) : (
+                      <>👮 Assignar manualment</>
+                    )}
                   </button>
                 )}
 
+                {/* Canvis d'estat */}
                 {transicions.length > 0 && (
                   <div>
                     <p className="text-xs text-gray-400 mb-1.5">Canviar estat:</p>
@@ -456,6 +585,7 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
           incidencia={inc}
           onTancar={() => setMostrarModalManual(false)}
           onAssignat={handleAssignacioManualOk}
+          esReforc={indicatiusAssignats.length > 0}
         />
       )}
 

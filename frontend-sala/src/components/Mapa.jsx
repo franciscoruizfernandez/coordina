@@ -171,20 +171,49 @@ function Mapa({
     return resultat;
   }, [indicatius, filtres.mostrarNoDisponibles]);
 
-  // ─── Calcular línia de trajecte ─────────────────────────────
-  const liniaTrajecte = useMemo(() => {
-    // 1) Trajecte explícit (ve del botó "Veure detalls incidència")
+  // ─── Calcular línies de trajecte (suporta múltiples indicatius) ─
+    const liniesTrajecte = useMemo(() => {
+    const linies = [];
+
+    // 1) Trajecte explícit (ve de "Veure detalls incidència" des d'un indicatiu)
     if (trajecteActiu) {
       const { origenLat, origenLon, destiLat, destiLon } = trajecteActiu;
       if ([origenLat, origenLon, destiLat, destiLon].every(Number.isFinite)) {
-        return [
-          [origenLat, origenLon],
-          [destiLat, destiLon],
-        ];
+        linies.push({
+          posicions: [[origenLat, origenLon], [destiLat, destiLon]],
+          esReforc: false,
+        });
+        return linies;
       }
     }
 
-    // 2) Trajecte automàtic: indicatiu seleccionat amb incidència assignada
+    // 2) Incidència seleccionada: dibuixar una línia per cada indicatiu
+    //    que estigui assignat a ella (els que tinguin incidencia_assignada_id = inc.id)
+    if (incidenciaSeleccionada) {
+      const inc = incidenciaSeleccionada;
+      const latInc = parseFloat(inc.ubicacio_lat);
+      const lonInc = parseFloat(inc.ubicacio_lon);
+
+      if (Number.isFinite(latInc) && Number.isFinite(lonInc)) {
+        indicatius.forEach((ind) => {
+          if (String(ind.incidencia_assignada_id) !== String(inc.id)) return;
+
+          const latInd = parseFloat(ind.ubicacio_lat);
+          const lonInd = parseFloat(ind.ubicacio_lon);
+
+          if ([latInd, lonInd].every(Number.isFinite)) {
+            linies.push({
+              posicions: [[latInd, lonInd], [latInc, lonInc]],
+              esReforc: false,
+            });
+          }
+        });
+      }
+
+      return linies;
+    }
+
+    // 3) Indicatiu seleccionat: una sola línia cap a la seva incidència
     if (indicatiuSeleccionat?.incidencia_assignada_id) {
       const ind = indicatiuSeleccionat;
       const inc = incidencies.find(
@@ -198,16 +227,16 @@ function Mapa({
         const lonInc = parseFloat(inc.ubicacio_lon);
 
         if ([latInd, lonInd, latInc, lonInc].every(Number.isFinite)) {
-          return [
-            [latInd, lonInd],
-            [latInc, lonInc],
-          ];
+          linies.push({
+            posicions: [[latInd, lonInd], [latInc, lonInc]],
+            esReforc: false,
+          });
         }
       }
     }
 
-    return null;
-  }, [trajecteActiu, indicatiuSeleccionat, incidencies]);
+    return linies;
+  }, [trajecteActiu, incidenciaSeleccionada, indicatiuSeleccionat, indicatius, incidencies]);
 
   return (
     <div className="relative w-full h-full">
@@ -242,10 +271,11 @@ function Mapa({
         <BotoCentrar />
         <ControladorEnfoc focusMapa={focusMapa} />
 
-        {/* Línia de trajecte indicatiu → incidència */}
-        {liniaTrajecte && (
+        {/* Línies de trajecte indicatius → incidència */}
+        {liniesTrajecte.map((linia, index) => (
           <Polyline
-            positions={liniaTrajecte}
+            key={index}
+            positions={linia.posicions}
             pathOptions={{
               color: "#2563EB",
               weight: 4,
@@ -254,7 +284,7 @@ function Mapa({
               lineCap: "round",
             }}
           />
-        )}
+        ))}
 
         {/* Incidències amb clustering */}
         <MarkerClusterGroup
