@@ -146,3 +146,18 @@ export const emetreNouMissatge = (missatge, destinatariId = null) => {
   // També a la sala sempre
   emetreSala('nou_missatge', { missatge });
 };
+
+// ==============================================================
+// EVENT 8: AVÍS 112 UNIFICAT
+// S'emet quan un nou avís del 112 es unifica amb una incidència
+// ja existent per proximitat i mateixa tipologia
+// ==============================================================
+export const emetreAvis112Unificat = (incidencia, numAvisos) => {
+  emetreSala('avis_112_unificat', {
+    incidencia_id:  incidencia.id,
+    tipologia:      incidencia.tipologia,
+    prioritat:      incidencia.prioritat,
+    direccio:       incidencia.direccio,
+    num_avisos_112: numAvisos,
+  });
+};

@@ -8,8 +8,8 @@ import {
   emetreIncidenciaActualitzada,
   emetreCanviEstatIncidencia,
 } from '../sockets/emissors.js'; 
-
 import { intentarAutoassignarIncidencia } from '../services/autoassignacioService.js';
+import { verificarDuplicat } from '../services/deduplicacioService.js';
 
 // ==============================================================
 // HELPER INTERN: Registrar traçabilitat
@@ -220,6 +220,27 @@ export const crearIncidencia = async (req, res, next) => {
         prioritatsValides: PRIORITATS,
       });
     }
+
+    // --- Verificar si és un avís duplicat ---
+    // Si existeix una incidència activa de la mateixa tipologia
+    // a menys de 150m i creada fa menys de 15 min, unificar-la
+    const incidenciaDuplicada = await verificarDuplicat({
+      ubicacio_lat: lat,
+      ubicacio_lon: lon,
+      tipologia,
+      usuari_id: req.usuari?.userId ?? null,
+    });
+
+    if (incidenciaDuplicada) {
+      return res.status(200).json({
+        exit:      true,
+        unificat:  true,
+        missatge:  `Avís 112 unificat amb incidència existent (${incidenciaDuplicada.num_avisos_112} avisos rebuts)`,
+        dades:     incidenciaDuplicada,
+      });
+    }
+
+    // --- Crear incidència ---
 
     // --- Crear incidència ---
     const novaIncidencia = await Incidencia.crear({
