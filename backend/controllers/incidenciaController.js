@@ -1,6 +1,7 @@
 // backend/controllers/incidenciaController.js
 
 import Incidencia, { TIPOLOGIES, PRIORITATS, ESTATS } from '../models/Incidencia.js';
+import pool from '../config/database.js';
 import EsdevenimentTracabilitat from '../models/EsdevenimentTracabilitat.js';
 import { esDinsRegio, missatgeForaDeRegio } from '../utils/limitGeografic.js';
 import {
@@ -10,6 +11,8 @@ import {
 } from '../sockets/emissors.js'; 
 import { intentarAutoassignarIncidencia } from '../services/autoassignacioService.js';
 import { verificarDuplicat } from '../services/deduplicacioService.js';
+import { calcularCobertura, emetreAvisCobertura } from '../services/coberturaService.js';
+import { programarEscalatSiCal } from '../services/coberturaTimerService.js';
 
 // ==============================================================
 // HELPER INTERN: Registrar traçabilitat
@@ -266,11 +269,31 @@ export const crearIncidencia = async (req, res, next) => {
     // EMETRE EVENT WEBSOCKET
     emetreNovaIncidencia(novaIncidencia);
 
-    // En mode automàtic, intentar autoassignar de forma asíncrona
+    // 🆕 En mode automàtic, intentar autoassignar de forma asíncrona
     // No bloqueja la resposta HTTP — si falla, no afecta la creació
-    intentarAutoassignarIncidencia(novaIncidencia.id).catch((err) => {
-      console.error('❌ [Auto] Error intentant autoassignar nova incidència:', err.message);
-    });
+    intentarAutoassignarIncidencia(novaIncidencia.id)
+      .then(() => {
+        // Si és crítica, comprovar cobertura i programar escalat si cal
+        if (novaIncidencia.prioritat === 'critica') {
+          programarEscalatSiCal(novaIncidencia.id).catch((err) => {
+            console.error('❌ [Escalat] Error programant escalat:', err.message);
+          });
+        }
+      })
+      .catch((err) => {
+        console.error('❌ [Auto] Error intentant autoassignar nova incidència:', err.message);
+      });
+
+    // En mode manual, si és crítica, avisar a la sala del dèficit
+    if (novaIncidencia.prioritat === 'critica') {
+      calcularCobertura(novaIncidencia.id)
+        .then((cobertura) => {
+          if (cobertura.deficit > 0) {
+            emetreAvisCobertura(novaIncidencia, cobertura);
+          }
+        })
+        .catch(() => {});
+    }
 
     res.status(201).json({
       exit: true,
@@ -573,6 +596,112 @@ export const obtenirHistorial = async (req, res, next) => {
     });
   } catch (error) {
     console.error('❌ Error obtenint historial:', error);
+    next(error);
+  }
+};
+
+// ==============================================================
+// PATCH /api/incidencies/:id/prioritat
+// Canviar prioritat d'una incidència
+// Si puja a crítica, activa lògica de cobertura i reforç
+// Rols: operador_sala, administrador, patrulla (qualsevolRol)
+// ==============================================================
+export const canviarPrioritatIncidencia = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { prioritat } = req.body;
+
+    if (!prioritat) {
+      return res.status(400).json({
+        error: true,
+        missatge: 'El camp "prioritat" és obligatori',
+      });
+    }
+
+    if (!PRIORITATS.includes(prioritat)) {
+      return res.status(400).json({
+        error: true,
+        missatge: `Prioritat invàlida. Ha de ser una de: ${PRIORITATS.join(', ')}`,
+      });
+    }
+
+    const incidenciaExistent = await Incidencia.trobarPerId(id);
+    if (!incidenciaExistent) {
+      return res.status(404).json({
+        error: true,
+        missatge: 'Incidència no trobada',
+      });
+    }
+
+    if (incidenciaExistent.estat === 'tancada') {
+      return res.status(400).json({
+        error: true,
+        missatge: "No es pot canviar la prioritat d'una incidència tancada",
+      });
+    }
+
+    const prioritatAnterior = incidenciaExistent.prioritat;
+
+    // Actualitzar la prioritat
+    const incidenciaActualitzada = await pool.query(
+      `UPDATE incidencies SET prioritat = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+      [prioritat, id]
+    );
+
+    const incNova = incidenciaActualitzada.rows[0];
+
+    // Traçabilitat
+    await registrarEsdeveniment(
+      'modificacio_incidencia',
+      req.usuari?.userId,
+      id,
+      null,
+      `Canvi de prioritat: ${prioritatAnterior} → ${prioritat}`,
+      { prioritat_anterior: prioritatAnterior, prioritat_nova: prioritat }
+    );
+
+    // Emetre actualització websocket
+    emetreIncidenciaActualitzada(incNova);
+
+    // Si puja a crítica, activar lògica de cobertura
+    if (prioritat === 'critica' && prioritatAnterior !== 'critica') {
+      const cobertura = await calcularCobertura(id);
+
+      if (cobertura.deficit > 0) {
+        const { default: ConfiguracioModel } = await import('../models/Configuracio.js');
+        const esModeAuto = await ConfiguracioModel.esModeAutomatic();
+
+        if (esModeAuto) {
+          // Mode auto: intentar assignar reforços
+          const { intentarAutoassignarPendents: autoassignar } =
+            await import('../services/autoassignacioService.js');
+          autoassignar()
+            .then(() => {
+              programarEscalatSiCal(id).catch(() => {});
+            })
+            .catch((err) => {
+              console.error('❌ [Auto] Error assignant reforç per escalada:', err.message);
+            });
+        } else {
+          // Mode manual: avisar
+          emetreAvisCobertura(incNova, cobertura);
+        }
+      }
+    }
+
+    // Si baixa de crítica, cancel·lar timer d'escalat si n'hi ha
+    if (prioritat !== 'critica' && prioritatAnterior === 'critica') {
+      const { cancellarEscalat } = await import('../services/coberturaTimerService.js');
+      cancellarEscalat(id);
+    }
+
+    res.json({
+      exit: true,
+      missatge: `Prioritat canviada de "${prioritatAnterior}" a "${prioritat}"`,
+      dades: incNova,
+    });
+  } catch (error) {
+    console.error('❌ Error canviant prioritat:', error);
     next(error);
   }
 };

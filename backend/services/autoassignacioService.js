@@ -238,6 +238,16 @@ const crearAssignacioAtomicament = async (incidencia, indicatiu) => {
 
   emetreCanviEstatIndicatiu(indicatiu.id, 'disponible', 'en_servei');
 
+  // Si la incidència és crítica, programar escalat si cal
+  if (incidencia.prioritat === 'critica') {
+    try {
+      const { programarEscalatSiCal } = await import('./coberturaTimerService.js');
+      await programarEscalatSiCal(incidencia.id);
+    } catch (err) {
+      console.error('❌ [Escalat] Error programant escalat post-assignació:', err.message);
+    }
+  }
+
   return assignacioCompleta;
 };
 
@@ -299,6 +309,15 @@ const obtenirIncidenciesPendents = async () => {
        i.timestamp_recepcio ASC`
   );
   return res.rows;
+};
+
+// ==============================================================
+// HELPER INTERN: Obtenir incidències amb dèficit de cobertura
+// Prioritza completar cobertura de crítiques abans que assignar noves
+// ==============================================================
+const obtenirIncidenciesAmbDeficitCobertura = async () => {
+  const { obtenirIncidenciesAmbDeficit } = await import('./coberturaService.js');
+  return obtenirIncidenciesAmbDeficit();
 };
 
 // ==============================================================
@@ -413,13 +432,9 @@ const seleccioGreedyGlobal = (parellsOrdenats) => {
 //   - Es finalitza/cancel·la una assignació
 //   - S'activa el mode automàtic
 //
-// Lògica: Greedy global per prioritat + distància/temps
-//   1. Obtenir totes les incidències pendents
-//   2. Obtenir tots els indicatius disponibles
-//   3. Construir matriu de candidats (totes les combinacions)
-//   4. Ordenar per: prioritat → temps → distància → antiguitat
-//   5. Selecció greedy: millor parell primer, sense repetir
-//   6. Crear assignacions de forma atòmica
+// Lògica millorada:
+//   1. PRIMER: completar cobertura d'incidències crítiques amb dèficit
+//   2. DESPRÉS: assignar incidències noves sense cap indicatiu
 //
 // Retorna el nombre d'assignacions creades
 // ==============================================================
@@ -429,66 +444,105 @@ export const intentarAutoassignarPendents = async () => {
     const esModeAuto = await Configuracio.esModeAutomatic();
     if (!esModeAuto) return 0;
 
-    // 2. Obtenir incidències pendents
+    let assignacionsCreades = 0;
+
+    // ── FASE 1: Completar cobertura de crítiques amb dèficit ──
+    const ambDeficit = await obtenirIncidenciesAmbDeficitCobertura();
+
+    if (ambDeficit.length > 0) {
+      console.log(
+        `ℹ️  [Auto] ${ambDeficit.length} incidència/es amb dèficit de cobertura`
+      );
+
+      for (const { incidencia, deficit } of ambDeficit) {
+        // Per cada unitat que falta, intentar assignar-ne una
+        for (let i = 0; i < deficit; i++) {
+          const indicatiu = await seleccionarMillorIndicatiu(incidencia);
+          if (!indicatiu) {
+            console.log('ℹ️  [Auto] Sense indicatius disponibles per completar cobertura');
+            break;
+          }
+
+          const assignacio = await crearAssignacioAtomicament(incidencia, indicatiu);
+          if (assignacio) {
+            assignacionsCreades++;
+            console.log(
+              `   ✅ Reforç: ${indicatiu.codi} → ${incidencia.tipologia} ` +
+              `[${incidencia.prioritat}] ` +
+              (indicatiu.temps_minuts !== null
+                ? `(${indicatiu.temps_minuts} min)`
+                : `(${indicatiu.distancia_km} km)`)
+            );
+          }
+        }
+      }
+    }
+
+    // ── FASE 2: Assignar incidències noves sense cap indicatiu ──
     const incidenciesPendents = await obtenirIncidenciesPendents();
 
-    if (incidenciesPendents.length === 0) {
+    if (incidenciesPendents.length === 0 && assignacionsCreades === 0) {
       console.log('ℹ️  [Auto] Cap incidència pendent per assignar');
       return 0;
     }
 
-    // 3. Obtenir indicatius disponibles
-    const indicatiusDisponibles = await Indicatiu.trobarDisponibles();
+    if (incidenciesPendents.length > 0) {
+      // Obtenir indicatius disponibles restants
+      const indicatiusDisponibles = await Indicatiu.trobarDisponibles();
 
-    if (indicatiusDisponibles.length === 0) {
-      console.log('ℹ️  [Auto] Cap indicatiu disponible');
-      return 0;
-    }
+      if (indicatiusDisponibles.length === 0) {
+        console.log('ℹ️  [Auto] Cap indicatiu disponible per a noves incidències');
+        return assignacionsCreades;
+      }
 
-    console.log(
-      `ℹ️  [Auto] Barrida global: ${incidenciesPendents.length} incidències × ` +
-      `${indicatiusDisponibles.length} indicatius`
-    );
-
-    // 4. Construir matriu de candidats amb costos
-    const parellsOrdenats = await construirMatriuCandidats(
-      incidenciesPendents,
-      indicatiusDisponibles
-    );
-
-    if (parellsOrdenats.length === 0) {
-      console.log('ℹ️  [Auto] Cap combinació vàlida trobada');
-      return 0;
-    }
-
-    // 5. Selecció greedy global — millor parell primer, sense repetir
-    const parellsSeleccionats = seleccioGreedyGlobal(parellsOrdenats);
-
-    if (parellsSeleccionats.length === 0) {
-      console.log('ℹ️  [Auto] Cap parell seleccionable');
-      return 0;
-    }
-
-    console.log(`ℹ️  [Auto] ${parellsSeleccionats.length} parells seleccionats, creant assignacions...`);
-
-    // 6. Crear assignacions de forma atòmica, una per una
-    let assignacionsCreades = 0;
-
-    for (const parell of parellsSeleccionats) {
-      const assignacio = await crearAssignacioAtomicament(
-        parell.incidencia,
-        parell.indicatiu
+      console.log(
+        `ℹ️  [Auto] Barrida global: ${incidenciesPendents.length} incidències × ` +
+        `${indicatiusDisponibles.length} indicatius`
       );
 
-      if (assignacio) {
-        assignacionsCreades++;
-        console.log(
-          `   ✅ ${parell.indicatiu.codi} → ${parell.incidencia.tipologia} ` +
-          `[${parell.incidencia.prioritat}] ` +
-          (parell.temps_minuts !== null
-            ? `(${parell.temps_minuts} min)`
-            : `(${parell.distancia_km} km)`)
-        );
+      // Construir matriu i selecció greedy
+      const parellsOrdenats = await construirMatriuCandidats(
+        incidenciesPendents,
+        indicatiusDisponibles
+      );
+
+      if (parellsOrdenats.length > 0) {
+        const parellsSeleccionats = seleccioGreedyGlobal(parellsOrdenats);
+
+        for (const parell of parellsSeleccionats) {
+          const assignacio = await crearAssignacioAtomicament(
+            parell.incidencia,
+            parell.indicatiu
+          );
+
+          if (assignacio) {
+            assignacionsCreades++;
+            console.log(
+              `   ✅ ${parell.indicatiu.codi} → ${parell.incidencia.tipologia} ` +
+              `[${parell.incidencia.prioritat}] ` +
+              (parell.temps_minuts !== null
+                ? `(${parell.temps_minuts} min)`
+                : `(${parell.distancia_km} km)`)
+            );
+
+            // Si la incidència és crítica, intentar assignar un segon
+            if (parell.incidencia.prioritat === 'critica') {
+              const segonIndicatiu = await seleccionarMillorIndicatiu(parell.incidencia);
+              if (segonIndicatiu) {
+                const segonaAssignacio = await crearAssignacioAtomicament(
+                  parell.incidencia,
+                  segonIndicatiu
+                );
+                if (segonaAssignacio) {
+                  assignacionsCreades++;
+                  console.log(
+                    `   ✅ Reforç crític: ${segonIndicatiu.codi} → ${parell.incidencia.tipologia}`
+                  );
+                }
+              }
+            }
+          }
+        }
       }
     }
 

@@ -8,6 +8,7 @@ import {
   crearIncidencia,
   actualitzarIncidencia,
   canviarEstatIncidencia,
+  canviarPrioritatIncidencia,
   tancarIncidencia,
   obtenirHistorial,
 } from '../controllers/incidenciaController.js';
@@ -49,6 +50,9 @@ router.put('/:id', nomesSiOperadorOAdmin, validarActualitzarIncidencia, actualit
 
 // PATCH /api/incidencies/:id/estat - Canviar estat
 router.patch('/:id/estat', nomesSiOperadorOAdmin, validarCanviarEstatIncidencia, canviarEstatIncidencia);
+
+// PATCH /api/incidencies/:id/prioritat - Canviar prioritat
+router.patch('/:id/prioritat', qualsevolRol, canviarPrioritatIncidencia);
 
 // DELETE /api/incidencies/:id - Tancament (soft delete)
 router.delete('/:id', nomesSiOperadorOAdmin, tancarIncidencia);

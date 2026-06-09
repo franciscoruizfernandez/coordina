@@ -226,6 +226,11 @@ export const getTotsStreams = async () => {
   return response.data;
 };
 
+export const canviarPrioritatIncidencia = async (id, prioritat) => {
+  const response = await api.patch(`/incidencies/${id}/prioritat`, { prioritat });
+  return response.data;
+};
+
 // ================= CONFIGURACIÓ =================
 
 export const obtenirModeAssignacio = async () => {

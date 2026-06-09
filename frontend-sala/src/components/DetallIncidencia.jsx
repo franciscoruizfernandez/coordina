@@ -6,6 +6,7 @@ import {
   getIncidencia,
   getHistorialIncidencia,
   canviarEstatIncidencia,
+  canviarPrioritatIncidencia,
   assignacioAutomatica,
   getIndicatiusActiusPerIncidencia,
 } from '../services/api';
@@ -185,6 +186,7 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
   const [assignantAuto, setAssignantAuto]             = useState(false);
   const [mostrarModalManual, setMostrarModalManual]   = useState(false);
   const [streamAmpliat, setStreamAmpliat]             = useState(null);
+  const [canviantPrioritat, setCanviantPrioritat]     = useState(false);
 
   // ─── Carregar detall ─────────────────────────────────────────
   const carregarDetall = useCallback(async () => {
@@ -293,6 +295,24 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
     }
   }, [incidencia?.id, recarregarTot, onIncidenciaActualitzada]);
 
+  const handleMarcarCritica = useCallback(async () => {
+    if (!incidencia?.id) return;
+    try {
+      setCanviantPrioritat(true);
+      await canviarPrioritatIncidencia(incidencia.id, 'critica');
+      toast.warning('🚨 Incidència marcada com a CRÍTICA — es buscaran reforços');
+      await recarregarTot();
+      if (onIncidenciaActualitzada) {
+        onIncidenciaActualitzada(incidencia.id, { prioritat: 'critica' });
+      }
+    } catch (err) {
+      console.error('❌ Error canviant prioritat:', err);
+      toast.error(`⚠️ ${err.response?.data?.missatge || "Error en canviar la prioritat"}`);
+    } finally {
+      setCanviantPrioritat(false);
+    }
+  }, [incidencia?.id, recarregarTot, onIncidenciaActualitzada]);
+
   const handleAssignacioManualOk = useCallback(async () => {
     setMostrarModalManual(false);
     toast.success('👮 Assignació manual realitzada correctament');
@@ -308,6 +328,11 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
   const transicions = TRANSICIONS_PERMESES[estatActual] || [];
   const esTancada   = estatActual === 'tancada';
   const esPotAssignar = ['nova', 'assignada', 'en_curs'].includes(estatActual);
+  const esCritica       = inc?.prioritat === 'critica';
+  const objectiuCobert  = esCritica ? 2 : 1;
+  const numActius       = indicatiusAssignats.length;
+  const teDeficit       = numActius > 0 && numActius < objectiuCobert;
+  const potMarcarCritica = !esCritica && !esTancada && inc?.estat !== 'resolta';
 
   if (!inc) {
     return (
@@ -432,10 +457,24 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
               <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
                 Patrulles assignades
               </h3>
-              {!carregantIndicatius && indicatiusAssignats.length > 0 && (
-                <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full text-xs font-semibold">
-                  {indicatiusAssignats.length}
-                </span>
+              {!carregantIndicatius && (
+                <div className="flex items-center gap-1.5">
+                  {numActius > 0 && (
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold
+                      ${teDeficit
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-green-100 text-green-700'
+                      }`}
+                    >
+                      {numActius}/{objectiuCobert}
+                    </span>
+                  )}
+                  {teDeficit && (
+                    <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-700 animate-pulse">
+                      ⚠️ Reforç pendent
+                    </span>
+                  )}
+                </div>
               )}
             </div>
 
@@ -531,6 +570,27 @@ function DetallIncidencia({ incidencia, onTancar, onIncidenciaActualitzada }) {
                       ))}
                     </div>
                   </div>
+                )}
+
+                {/* Marcar com a crítica */}
+                {potMarcarCritica && (
+                  <button
+                    onClick={handleMarcarCritica}
+                    disabled={canviantPrioritat || canviantEstat || assignantAuto}
+                    className="w-full py-2 px-3 rounded text-sm font-medium
+                               bg-red-600 text-white hover:bg-red-700
+                               disabled:bg-red-300 disabled:cursor-not-allowed
+                               flex items-center justify-center gap-2 transition-colors"
+                  >
+                    {canviantPrioritat ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Canviant prioritat...
+                      </>
+                    ) : (
+                      <>🚨 Marcar com a crítica</>
+                    )}
+                  </button>
                 )}
               </div>
             </section>

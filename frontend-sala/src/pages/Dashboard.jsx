@@ -31,7 +31,6 @@ function Dashboard() {
   const [mostrarLlistaMobile, setMostrarLlistaMobile] = useState(false);
   const [mostrarDetallMobile, setMostrarDetallMobile] = useState(false);
 
-  // ─── NOUS ESTATS per enfoc i trajecte ──────────────────────
   const [focusMapa, setFocusMapa] = useState(null);
   const [trajecteActiu, setTrajecteActiu] = useState(null);
 
@@ -59,6 +58,103 @@ function Dashboard() {
   useEffect(() => {
     carregarDades();
   }, [carregarDades]);
+
+  // ─── Helper: crear objecte focusMapa segur ─────────────────
+  const crearFocus = useCallback((lat, lon) => {
+    const latNum = parseFloat(lat);
+    const lonNum = parseFloat(lon);
+    if (!Number.isFinite(latNum) || !Number.isFinite(lonNum)) return null;
+    return { lat: latNum, lon: lonNum };
+  }, []);
+
+  // ─── Handlers ──────────────────────────────────────────────
+
+  const handleIncidenciaActualitzada = useCallback((id, canvis) => {
+    setIncidencies((prev) =>
+      prev.map((inc) => (inc.id === id ? { ...inc, ...canvis } : inc))
+    );
+    setIncidenciaSeleccionada((prev) =>
+      prev?.id === id ? { ...prev, ...canvis } : prev
+    );
+  }, []);
+
+  const handleSeleccionarIncidencia = useCallback((incidencia, indicatiuOrigen = null) => {
+    setIncidenciaSeleccionada(incidencia);
+    setIndicatiuSeleccionat(null);
+    setMostrarDetallMobile(true);
+    setMostrarLlistaMobile(false);
+
+    const focus = crearFocus(incidencia?.ubicacio_lat, incidencia?.ubicacio_lon);
+    if (focus) {
+      setFocusMapa((prev) => ({
+        ...focus,
+        seq: (prev?.seq || 0) + 1,
+      }));
+    }
+
+    if (indicatiuOrigen) {
+      const oLat = parseFloat(indicatiuOrigen.ubicacio_lat);
+      const oLon = parseFloat(indicatiuOrigen.ubicacio_lon);
+      const dLat = parseFloat(incidencia?.ubicacio_lat);
+      const dLon = parseFloat(incidencia?.ubicacio_lon);
+
+      if ([oLat, oLon, dLat, dLon].every(Number.isFinite)) {
+        setTrajecteActiu({
+          origenLat: oLat, origenLon: oLon,
+          destiLat: dLat, destiLon: dLon,
+        });
+      } else {
+        setTrajecteActiu(null);
+      }
+    } else {
+      setTrajecteActiu(null);
+    }
+  }, [crearFocus]);
+
+  const handleSeleccionarIndicatiu = useCallback((indicatiu) => {
+    setIndicatiuSeleccionat(indicatiu);
+    setIncidenciaSeleccionada(null);
+    setMostrarDetallMobile(true);
+    setMostrarLlistaMobile(false);
+
+    const focus = crearFocus(indicatiu?.ubicacio_lat, indicatiu?.ubicacio_lon);
+    if (focus) {
+      setFocusMapa((prev) => ({
+        ...focus,
+        seq: (prev?.seq || 0) + 1,
+      }));
+    }
+
+    setTrajecteActiu(null);
+  }, [crearFocus]);
+
+  const handleTancarDetall = useCallback(() => {
+    setIncidenciaSeleccionada(null);
+    setIndicatiuSeleccionat(null);
+    setTrajecteActiu(null);
+    setMostrarDetallMobile(false);
+  }, []);
+
+  // ─── Helper per obrir una incidència des d'un toast ────────
+  const handleObrirIncidenciaPerId = useCallback(async (incidenciaId) => {
+    // Buscar en les incidències ja carregades
+    let inc = incidencies.find((i) => i.id === incidenciaId);
+
+    // Si no la trobem (pot ser nova), recarregar
+    if (!inc) {
+      try {
+        const { getIncidencia } = await import('../services/api');
+        const resposta = await getIncidencia(incidenciaId);
+        inc = resposta.dades || resposta;
+      } catch {
+        return;
+      }
+    }
+
+    if (inc) {
+      handleSeleccionarIncidencia(inc);
+    }
+  }, [incidencies, handleSeleccionarIncidencia]);
 
   // ─── WebSocket events ──────────────────────────────────────
   useEffect(() => {
@@ -129,95 +225,101 @@ function Dashboard() {
       );
     });
 
+    // ── Avís 112 unificat ──────────────────────────────────
+    socket.on('avis_112_unificat', (data) => {
+      // Actualitzar el comptador d'avisos a la incidència
+      setIncidencies((prev) =>
+        prev.map((inc) =>
+          inc.id === data.incidencia_id
+            ? { ...inc, num_avisos_112: data.num_avisos_112 }
+            : inc
+        )
+      );
+      setIncidenciaSeleccionada((prev) =>
+        prev?.id === data.incidencia_id
+          ? { ...prev, num_avisos_112: data.num_avisos_112 }
+          : prev
+      );
+
+      toast.info(
+        `📡 Avís 112 unificat: ${data.tipologia} — ${data.direccio || 'sense adreça'} (${data.num_avisos_112} avisos)`,
+        { autoClose: 4000 }
+      );
+    });
+
+    // ── Reforç pendent (mode manual) ───────────────────────
+    socket.on('reforc_pendent', (data) => {
+      reproduirAlertaCritica();
+
+      toast.warning(
+        ({ closeToast }) => (
+          <div>
+            <p className="font-bold text-sm mb-1">
+              🚨 Reforç pendent
+            </p>
+            <p className="text-xs text-gray-600 mb-2">
+              {data.tipologia?.toUpperCase()} — {data.direccio || 'sense adreça'}
+            </p>
+            <p className="text-xs text-gray-500 mb-2">
+              Patrulles: {data.actius}/{data.objectiu}
+              {data.escalar && ' — Es recomana un tercer indicatiu'}
+            </p>
+            <button
+              onClick={() => {
+                handleObrirIncidenciaPerId(data.incidencia_id);
+                closeToast();
+              }}
+              className="w-full py-1.5 px-3 rounded text-xs font-semibold
+                         bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+            >
+              📋 Veure incidència
+            </button>
+          </div>
+        ),
+        {
+          autoClose: 15000,
+          closeOnClick: false,
+        }
+      );
+    });
+
+    // ── Reforç assignat (mode auto) ────────────────────────
+    socket.on('reforc_assignat', (data) => {
+      toast.success(
+        `🔰 Reforç assignat: ${data.tipologia} — ${data.direccio || ''}`,
+        { autoClose: 5000 }
+      );
+    });
+
+    // ── Incidència assignada (actualitzar indicatius) ──────
+    socket.on('incidencia_assignada', (data) => {
+      // Actualitzar l'indicatiu amb la nova incidència assignada
+      if (data.indicatiu?.id) {
+        setIndicatius((prev) =>
+          prev.map((ind) =>
+            ind.id === data.indicatiu.id
+              ? {
+                  ...ind,
+                  estat_operatiu: 'en_servei',
+                  incidencia_assignada_id: data.incidencia?.id || null,
+                }
+              : ind
+          )
+        );
+      }
+    });
+
     return () => {
       socket.off('nova_incidencia');
       socket.off('ubicacio_indicatiu');
       socket.off('canvi_estat_incidencia');
       socket.off('canvi_estat_indicatiu');
+      socket.off('avis_112_unificat');
+      socket.off('reforc_pendent');
+      socket.off('reforc_assignat');
+      socket.off('incidencia_assignada');
     };
-  }, [socket]);
-
-  // ─── Helper: crear objecte focusMapa segur ─────────────────
-  const crearFocus = useCallback((lat, lon) => {
-    const latNum = parseFloat(lat);
-    const lonNum = parseFloat(lon);
-    if (!Number.isFinite(latNum) || !Number.isFinite(lonNum)) return null;
-    return { lat: latNum, lon: lonNum };
-  }, []);
-
-  // ─── Handlers ──────────────────────────────────────────────
-
-  const handleIncidenciaActualitzada = useCallback((id, canvis) => {
-    setIncidencies((prev) =>
-      prev.map((inc) => (inc.id === id ? { ...inc, ...canvis } : inc))
-    );
-    setIncidenciaSeleccionada((prev) =>
-      prev?.id === id ? { ...prev, ...canvis } : prev
-    );
-  }, []);
-
-  const handleSeleccionarIncidencia = useCallback((incidencia, indicatiuOrigen = null) => {
-    setIncidenciaSeleccionada(incidencia);
-    setIndicatiuSeleccionat(null);
-    setMostrarDetallMobile(true);
-    setMostrarLlistaMobile(false);
-
-    // Enfocar mapa a la incidència (només si coords vàlides)
-    const focus = crearFocus(incidencia?.ubicacio_lat, incidencia?.ubicacio_lon);
-    if (focus) {
-      setFocusMapa((prev) => ({
-        ...focus,
-        seq: (prev?.seq || 0) + 1,
-      }));
-    }
-
-    // Trajecte: si venim d'un indicatiu, dibuixar línia
-    if (indicatiuOrigen) {
-      const oLat = parseFloat(indicatiuOrigen.ubicacio_lat);
-      const oLon = parseFloat(indicatiuOrigen.ubicacio_lon);
-      const dLat = parseFloat(incidencia?.ubicacio_lat);
-      const dLon = parseFloat(incidencia?.ubicacio_lon);
-
-      if ([oLat, oLon, dLat, dLon].every(Number.isFinite)) {
-        setTrajecteActiu({
-          origenLat: oLat,
-          origenLon: oLon,
-          destiLat: dLat,
-          destiLon: dLon,
-        });
-      } else {
-        setTrajecteActiu(null);
-      }
-    } else {
-      setTrajecteActiu(null);
-    }
-  }, [crearFocus]);
-
-  const handleSeleccionarIndicatiu = useCallback((indicatiu) => {
-    setIndicatiuSeleccionat(indicatiu);
-    setIncidenciaSeleccionada(null);
-    setMostrarDetallMobile(true);
-    setMostrarLlistaMobile(false);
-
-    // Enfocar mapa a l'indicatiu (només si coords vàlides)
-    const focus = crearFocus(indicatiu?.ubicacio_lat, indicatiu?.ubicacio_lon);
-    if (focus) {
-      setFocusMapa((prev) => ({
-        ...focus,
-        seq: (prev?.seq || 0) + 1,
-      }));
-    }
-
-    // Netejar trajecte explícit — el Mapa el calcularà automàticament
-    setTrajecteActiu(null);
-  }, [crearFocus]);
-
-  const handleTancarDetall = useCallback(() => {
-    setIncidenciaSeleccionada(null);
-    setIndicatiuSeleccionat(null);
-    setTrajecteActiu(null);
-    setMostrarDetallMobile(false);
-  }, []);
+  }, [socket, handleObrirIncidenciaPerId]);
 
   // ─── Pantalla error ────────────────────────────────────────
   if (error && !carregant && incidencies.length === 0) {
@@ -244,7 +346,6 @@ function Dashboard() {
 
   const hiHaDetallObert = incidenciaSeleccionada || indicatiuSeleccionat;
 
-  // ─── Props comunes del mapa ────────────────────────────────
   const propsMapaComunes = {
     incidencies,
     indicatius,
