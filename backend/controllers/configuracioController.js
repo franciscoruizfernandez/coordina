@@ -55,21 +55,29 @@ export const establirMode = async (req, res, next) => {
 
     console.log(`🔄 Mode d'assignació canviat: ${modeAnterior} → ${mode}`);
 
-    // Si s'ha activat el mode automàtic, llançar barrida d'incidències pendents
-    // Ho fem de forma asíncrona per no bloquejar la resposta HTTP
+    // Si s'ha activat el mode automàtic, fer barrida immediata
+    // Esperem el resultat per retornar-lo a la resposta HTTP
+    let assignacionsCreades = 0;
+
     if (mode === MODES.AUTOMATIC && modeAnterior !== MODES.AUTOMATIC) {
       console.log('🔄 Mode automàtic activat — iniciant barrida de pendents...');
-      intentarAutoassignarPendents().catch((err) => {
+      try {
+        assignacionsCreades = await intentarAutoassignarPendents();
+      } catch (err) {
         console.error('❌ Error en barrida inicial de mode automàtic:', err.message);
-      });
+        // No aturem la resposta, simplement informem que ha fallat
+      }
     }
 
     res.json({
-      exit:   true,
-      missatge: `Mode d'assignació establert a "${mode}"`,
+      exit:     true,
+      missatge: mode === MODES.AUTOMATIC && assignacionsCreades > 0
+        ? `Mode automàtic activat. ${assignacionsCreades} incidència/es assignada/es automàticament.`
+        : `Mode d'assignació establert a "${mode}"`,
       dades: {
-        mode_anterior: modeAnterior,
-        mode_nou:      mode,
+        mode_anterior:        modeAnterior,
+        mode_nou:             mode,
+        assignacions_creades: assignacionsCreades,
       },
     });
   } catch (error) {

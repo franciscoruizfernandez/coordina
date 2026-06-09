@@ -264,12 +264,152 @@ export const intentarAutoassignarIncidencia = async (incidenciaId) => {
 };
 
 // ==============================================================
+// HELPER INTERN: Obtenir incidències pendents d'assignació
+// Retorna totes les incidències 'nova' sense assignació activa
+// ==============================================================
+const obtenirIncidenciesPendents = async () => {
+  const res = await pool.query(
+    `SELECT i.*
+     FROM incidencies i
+     WHERE i.estat = 'nova'
+       AND NOT EXISTS (
+         SELECT 1 FROM assignacions a
+         WHERE a.incidencia_id = i.id
+           AND a.timestamp_finalitzacio IS NULL
+       )
+     ORDER BY
+       CASE i.prioritat
+         WHEN 'critica' THEN 1
+         WHEN 'alta'    THEN 2
+         WHEN 'mitjana' THEN 3
+         WHEN 'baixa'   THEN 4
+         ELSE 5
+       END,
+       i.timestamp_recepcio ASC`
+  );
+  return res.rows;
+};
+
+// ==============================================================
+// HELPER INTERN: Valor numèric de prioritat per ordenar
+// Menor = més prioritari
+// ==============================================================
+const valorPrioritat = (prioritat) => {
+  switch (prioritat) {
+    case 'critica': return 1;
+    case 'alta':    return 2;
+    case 'mitjana': return 3;
+    case 'baixa':   return 4;
+    default:        return 5;
+  }
+};
+
+// ==============================================================
+// HELPER INTERN: Construir matriu de candidats
+// Per cada combinació incidència ↔ indicatiu, calcula el cost
+// (temps OSRM o distància Haversine) i retorna tots els parells
+// ordenats del millor al pitjor
+// ==============================================================
+const construirMatriuCandidats = async (incidencies, indicatius) => {
+  const parells = [];
+
+  // Per cada incidència, calcular rutes a TOTS els indicatius disponibles
+  for (const incidencia of incidencies) {
+    const ambRutes = await calcularRutesMultiples(
+      parseFloat(incidencia.ubicacio_lat),
+      parseFloat(incidencia.ubicacio_lon),
+      indicatius
+    );
+
+    for (const ind of ambRutes) {
+      // Descartar indicatius sense coordenades vàlides
+      if (ind.ubicacio_lat === null || ind.ubicacio_lon === null) continue;
+
+      parells.push({
+        incidencia,
+        indicatiu:    ind,
+        prioritat:    valorPrioritat(incidencia.prioritat),
+        temps_minuts: ind.temps_minuts,
+        distancia_km: ind.distancia_km,
+        timestamp:    new Date(incidencia.timestamp_recepcio).getTime(),
+      });
+    }
+  }
+
+  // Ordenar parells: prioritat → temps → distància → antiguitat → codi
+  parells.sort((a, b) => {
+    // 1. Prioritat de la incidència (crítica primer)
+    if (a.prioritat !== b.prioritat) return a.prioritat - b.prioritat;
+
+    // 2. Temps OSRM (si ambdós en tenen)
+    if (a.temps_minuts !== null && b.temps_minuts !== null) {
+      if (a.temps_minuts !== b.temps_minuts) return a.temps_minuts - b.temps_minuts;
+    }
+
+    // 3. Si un té OSRM i l'altre no, prioritzar el que en té
+    if (a.temps_minuts !== null && b.temps_minuts === null) return -1;
+    if (a.temps_minuts === null && b.temps_minuts !== null) return 1;
+
+    // 4. Distància Haversine
+    if (a.distancia_km !== null && b.distancia_km !== null) {
+      if (a.distancia_km !== b.distancia_km) return a.distancia_km - b.distancia_km;
+    }
+
+    // 5. Incidència més antiga primer
+    if (a.timestamp !== b.timestamp) return a.timestamp - b.timestamp;
+
+    // 6. Desempat per codi d'indicatiu
+    return (a.indicatiu.codi || '').localeCompare(b.indicatiu.codi || '');
+  });
+
+  return parells;
+};
+
+// ==============================================================
+// HELPER INTERN: Selecció greedy global
+// Recorre els parells ordenats i assigna sense repetir
+// cap incidència ni cap indicatiu
+// Retorna la llista de parells seleccionats
+// ==============================================================
+const seleccioGreedyGlobal = (parellsOrdenats) => {
+  const incidenciesUsades = new Set();
+  const indicatiusUsats   = new Set();
+  const seleccionats      = [];
+
+  for (const parell of parellsOrdenats) {
+    const incId = parell.incidencia.id;
+    const indId = parell.indicatiu.id;
+
+    // Saltar si la incidència ja està assignada en aquesta ronda
+    if (incidenciesUsades.has(incId)) continue;
+
+    // Saltar si l'indicatiu ja està assignat en aquesta ronda
+    if (indicatiusUsats.has(indId)) continue;
+
+    // Seleccionar aquest parell
+    seleccionats.push(parell);
+    incidenciesUsades.add(incId);
+    indicatiusUsats.add(indId);
+  }
+
+  return seleccionats;
+};
+
+// ==============================================================
 // PÚBLIC: Intentar assignar incidències pendents (barrida global)
 // S'usa quan:
-Un indicatiu passa a disponible
-Es finalitza/cancel·la una assignació
-S'activa el mode automàtic
-// Ordena les incidències per prioritat i les assigna una a una
+//   - Un indicatiu passa a disponible
+//   - Es finalitza/cancel·la una assignació
+//   - S'activa el mode automàtic
+//
+// Lògica: Greedy global per prioritat + distància/temps
+//   1. Obtenir totes les incidències pendents
+//   2. Obtenir tots els indicatius disponibles
+//   3. Construir matriu de candidats (totes les combinacions)
+//   4. Ordenar per: prioritat → temps → distància → antiguitat
+//   5. Selecció greedy: millor parell primer, sense repetir
+//   6. Crear assignacions de forma atòmica
+//
 // Retorna el nombre d'assignacions creades
 // ==============================================================
 export const intentarAutoassignarPendents = async () => {
@@ -278,52 +418,66 @@ export const intentarAutoassignarPendents = async () => {
     const esModeAuto = await Configuracio.esModeAutomatic();
     if (!esModeAuto) return 0;
 
-    // 2. Obtenir totes les incidències "nova" sense assignació activa
-    //    Ordenades per prioritat (crítica primer) i timestamp
-    const resIncidencies = await pool.query(
-      `SELECT i.*
-       FROM incidencies i
-       WHERE i.estat = 'nova'
-         AND NOT EXISTS (
-           SELECT 1 FROM assignacions a
-           WHERE a.incidencia_id = i.id
-             AND a.timestamp_finalitzacio IS NULL
-         )
-       ORDER BY
-         CASE i.prioritat
-           WHEN 'critica' THEN 1
-           WHEN 'alta'    THEN 2
-           WHEN 'mitjana' THEN 3
-           WHEN 'baixa'   THEN 4
-           ELSE 5
-         END,
-         i.timestamp_recepcio ASC`
-    );
-
-    const incidenciesPendents = resIncidencies.rows;
+    // 2. Obtenir incidències pendents
+    const incidenciesPendents = await obtenirIncidenciesPendents();
 
     if (incidenciesPendents.length === 0) {
-      console.log('ℹ️  [Auto] Cap incidència pending per assignar');
+      console.log('ℹ️  [Auto] Cap incidència pendent per assignar');
       return 0;
     }
 
-    console.log(`ℹ️  [Auto] ${incidenciesPendents.length} incidències pendents de assignació`);
+    // 3. Obtenir indicatius disponibles
+    const indicatiusDisponibles = await Indicatiu.trobarDisponibles();
 
+    if (indicatiusDisponibles.length === 0) {
+      console.log('ℹ️  [Auto] Cap indicatiu disponible');
+      return 0;
+    }
+
+    console.log(
+      `ℹ️  [Auto] Barrida global: ${incidenciesPendents.length} incidències × ` +
+      `${indicatiusDisponibles.length} indicatius`
+    );
+
+    // 4. Construir matriu de candidats amb costos
+    const parellsOrdenats = await construirMatriuCandidats(
+      incidenciesPendents,
+      indicatiusDisponibles
+    );
+
+    if (parellsOrdenats.length === 0) {
+      console.log('ℹ️  [Auto] Cap combinació vàlida trobada');
+      return 0;
+    }
+
+    // 5. Selecció greedy global — millor parell primer, sense repetir
+    const parellsSeleccionats = seleccioGreedyGlobal(parellsOrdenats);
+
+    if (parellsSeleccionats.length === 0) {
+      console.log('ℹ️  [Auto] Cap parell seleccionable');
+      return 0;
+    }
+
+    console.log(`ℹ️  [Auto] ${parellsSeleccionats.length} parells seleccionats, creant assignacions...`);
+
+    // 6. Crear assignacions de forma atòmica, una per una
     let assignacionsCreades = 0;
 
-    // 3. Per cada incidència pendent, intentar assignar
-    //    (s'atura si no queden indicatius disponibles)
-    for (const incidencia of incidenciesPendents) {
-      const indicatiu = await seleccionarMillorIndicatiu(incidencia);
-      if (!indicatiu) {
-        // Si no hi ha indicatius disponibles, no té sentit continuar
-        console.log('ℹ️  [Auto] Sense indicatius disponibles, aturant barrida');
-        break;
-      }
+    for (const parell of parellsSeleccionats) {
+      const assignacio = await crearAssignacioAtomicament(
+        parell.incidencia,
+        parell.indicatiu
+      );
 
-      const assignacio = await crearAssignacioAtomicament(incidencia, indicatiu);
       if (assignacio) {
         assignacionsCreades++;
+        console.log(
+          `   ✅ ${parell.indicatiu.codi} → ${parell.incidencia.tipologia} ` +
+          `[${parell.incidencia.prioritat}] ` +
+          (parell.temps_minuts !== null
+            ? `(${parell.temps_minuts} min)`
+            : `(${parell.distancia_km} km)`)
+        );
       }
     }
 
