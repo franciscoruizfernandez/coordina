@@ -1,16 +1,17 @@
 // backend/services/autoassignacioService.js
-
-/*  Motor central del mode automàtic.
-S'encarrega de:
-        Comprovar si el mode automàtic està actiu
-        Seleccionar el millor indicatiu disponible per a una incidència
-        Crear l'assignació de forma atòmica (transacció)
-        Registrar traçabilitat i emetre websockets
-    S'invoca des de:
-        incidenciaController  → quan es crea una nova incidència
-        indicatiuController   → quan un indicatiu passa a "disponible"
-        assignacioController  → quan es finalitza o cancel·la una assignació
-        configuracioController → quan s'activa el mode automàtic (barrida inicial) */
+//
+// Motor central del mode automàtic.
+// S'encarrega de:
+//   - Comprovar si el mode automàtic està actiu
+//   - Seleccionar el millor indicatiu disponible per a una incidència
+//   - Crear l'assignació de forma atòmica (transacció)
+//   - Registrar traçabilitat i emetre websockets
+//
+// S'invoca des de:
+//   - incidenciaController  → quan es crea una nova incidència
+//   - indicatiuController   → quan un indicatiu passa a "disponible"
+//   - assignacioController  → quan es finalitza o cancel·la una assignació
+//   - configuracioController → quan s'activa el mode automàtic (barrida inicial)
 
 import { getClient } from '../config/database.js';
 import pool from '../config/database.js';
@@ -99,11 +100,11 @@ const seleccionarMillorIndicatiu = async (incidencia) => {
 // CORE: Crear l'assignació automàtica de forma atòmica
 // Fa tot en una transacció:
 //   1. Bloqueja la incidència per evitar condicions de carrera
-//   2. Verifica que no té assignació activa
+//   2. Verifica que la incidència és assignable
 //   3. Verifica que l'indicatiu segueix disponible
 //   4. Crea l'assignació
 //   5. Actualitza indicatiu (en_servei + incidencia_assignada_id)
-//   6. Actualitza incidència (assignada)
+//   6. Actualitza incidència si cal (assignada)
 // Després de la transacció: traçabilitat + websockets
 // ==============================================================
 const crearAssignacioAtomicament = async (incidencia, indicatiu) => {
@@ -129,26 +130,14 @@ const crearAssignacioAtomicament = async (incidencia, indicatiu) => {
     const estatActual = resLock.rows[0].estat;
 
     // 2. Verificar que la incidència segueix en estat assignable
-    if (estatActual !== 'nova') {
+    const estatsAssignables = ['nova', 'assignada', 'en_curs'];
+    if (!estatsAssignables.includes(estatActual)) {
       await client.query('ROLLBACK');
-      console.log(`ℹ️  [Auto] Incidència ${incidencia.id} ja no és "nova" (estat: ${estatActual})`);
+      console.log(`ℹ️  [Auto] Incidència ${incidencia.id} no assignable (estat: ${estatActual})`);
       return null;
     }
 
-    // 3. Verificar que no té assignació activa
-    const resAssignacioActiva = await client.query(
-      `SELECT id FROM assignacions
-       WHERE incidencia_id = $1 AND timestamp_finalitzacio IS NULL`,
-      [incidencia.id]
-    );
-
-    if (resAssignacioActiva.rows.length > 0) {
-      await client.query('ROLLBACK');
-      console.log(`ℹ️  [Auto] Incidència ${incidencia.id} ja té assignació activa`);
-      return null;
-    }
-
-    // 4. Verificar que l'indicatiu segueix disponible (bloqueig de fila)
+    // 3. Verificar que l'indicatiu segueix disponible (bloqueig de fila)
     const resIndicatiu = await client.query(
       `SELECT id, estat_operatiu FROM indicatius WHERE id = $1 FOR UPDATE`,
       [indicatiu.id]
@@ -160,13 +149,22 @@ const crearAssignacioAtomicament = async (incidencia, indicatiu) => {
       return null;
     }
 
+    // 4. Determinar tipus d'assignació
+    const resActives = await client.query(
+      `SELECT COUNT(*) AS total FROM assignacions
+       WHERE incidencia_id = $1 AND timestamp_finalitzacio IS NULL`,
+      [incidencia.id]
+    );
+    const tipusAssignacio = parseInt(resActives.rows[0].total) > 0 ? 'reforc' : 'principal';
+
     // 5. Crear l'assignació
     const resAssignacio = await client.query(
       `INSERT INTO assignacions
-         (incidencia_id, indicatiu_id, mode_assignacio, usuari_assignador_id, timestamp_assignacio)
-       VALUES ($1, $2, 'automatica', NULL, NOW())
+         (incidencia_id, indicatiu_id, mode_assignacio, usuari_assignador_id,
+          tipus_assignacio, timestamp_assignacio)
+       VALUES ($1, $2, 'automatica', NULL, $3, NOW())
        RETURNING *`,
-      [incidencia.id, indicatiu.id]
+      [incidencia.id, indicatiu.id, tipusAssignacio]
     );
     novaAssignacio = resAssignacio.rows[0];
 
@@ -178,18 +176,20 @@ const crearAssignacioAtomicament = async (incidencia, indicatiu) => {
       [incidencia.id, indicatiu.id]
     );
 
-    // 7. Actualitzar incidència: assignada
-    await client.query(
-      `UPDATE incidencies
-       SET estat = 'assignada', updated_at = NOW()
-       WHERE id = $1`,
-      [incidencia.id]
-    );
+    // 7. Actualitzar incidència: només si estava en 'nova'
+    if (estatActual === 'nova') {
+      await client.query(
+        `UPDATE incidencies
+         SET estat = 'assignada', updated_at = NOW()
+         WHERE id = $1`,
+        [incidencia.id]
+      );
+    }
 
     await client.query('COMMIT');
 
     console.log(
-      `✅ [Auto] Assignació creada: ${indicatiu.codi} → incidència ${incidencia.id}`
+      `✅ [Auto] Assignació creada (${tipusAssignacio}): ${indicatiu.codi} → incidència ${incidencia.id}`
     );
 
   } catch (err) {
@@ -204,7 +204,7 @@ const crearAssignacioAtomicament = async (incidencia, indicatiu) => {
 
   // ── Fora de la transacció: traçabilitat i websockets ──────────
 
-  // Obtenir assignació completa amb JOINs per als websockets
+  // Obtenir dades actualitzades per als websockets
   const assignacioCompleta = await Assignacio.trobarPerId(novaAssignacio.id);
   const incidenciaActualitzada = await Incidencia.trobarPerId(incidencia.id);
   const indicatiuActualitzat   = await Indicatiu.trobarPerId(indicatiu.id);
@@ -214,12 +214,13 @@ const crearAssignacioAtomicament = async (incidencia, indicatiu) => {
     TIPUS_ESDEVENIMENT.ASSIGNACIO_CREADA,
     incidencia.id,
     indicatiu.id,
-    `Assignació automàtica (sistema): Indicatiu ${indicatiu.codi} ` +
+    `Assignació automàtica (${novaAssignacio.tipus_assignacio}): Indicatiu ${indicatiu.codi} ` +
       (indicatiu.temps_minuts != null
         ? `(${indicatiu.temps_minuts} min, ${indicatiu.distancia_km} km via OSRM)`
         : `(${indicatiu.distancia_km} km via Haversine)`),
     {
       mode:            'automatica',
+      tipus:           novaAssignacio.tipus_assignacio,
       indicatiu_codi:  indicatiu.codi,
       distancia_km:    indicatiu.distancia_km  ?? null,
       temps_minuts:    indicatiu.temps_minuts  ?? null,
@@ -229,7 +230,12 @@ const crearAssignacioAtomicament = async (incidencia, indicatiu) => {
 
   // Websockets — reutilitzem els emissors existents
   emetreIncidenciaAssignada(assignacioCompleta, incidenciaActualitzada, indicatiuActualitzat);
-  emetreCanviEstatIncidencia(incidencia.id, 'nova', 'assignada');
+
+  // Només emetre canvi d'estat si realment ha canviat
+  if (incidencia.estat === 'nova') {
+    emetreCanviEstatIncidencia(incidencia.id, 'nova', 'assignada');
+  }
+
   emetreCanviEstatIndicatiu(indicatiu.id, 'disponible', 'en_servei');
 
   return assignacioCompleta;
@@ -248,7 +254,11 @@ export const intentarAutoassignarIncidencia = async (incidenciaId) => {
 
     // 2. Obtenir la incidència
     const incidencia = await Incidencia.trobarPerId(incidenciaId);
-    if (!incidencia || incidencia.estat !== 'nova') return null;
+    if (!incidencia) return null;
+
+    // Només autoassignar si està en estat assignable
+    const estatsAssignables = ['nova', 'assignada', 'en_curs'];
+    if (!estatsAssignables.includes(incidencia.estat)) return null;
 
     // 3. Seleccionar el millor indicatiu
     const indicatiu = await seleccionarMillorIndicatiu(incidencia);
@@ -265,13 +275,14 @@ export const intentarAutoassignarIncidencia = async (incidenciaId) => {
 
 // ==============================================================
 // HELPER INTERN: Obtenir incidències pendents d'assignació
-// Retorna totes les incidències 'nova' sense assignació activa
+// Retorna totes les incidències en estats assignables sense
+// cap assignació activa
 // ==============================================================
 const obtenirIncidenciesPendents = async () => {
   const res = await pool.query(
     `SELECT i.*
      FROM incidencies i
-     WHERE i.estat = 'nova'
+     WHERE i.estat IN ('nova')
        AND NOT EXISTS (
          SELECT 1 FROM assignacions a
          WHERE a.incidencia_id = i.id
