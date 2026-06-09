@@ -31,6 +31,10 @@ function Dashboard() {
   const [mostrarLlistaMobile, setMostrarLlistaMobile] = useState(false);
   const [mostrarDetallMobile, setMostrarDetallMobile] = useState(false);
 
+  // ─── NOUS ESTATS per enfoc i trajecte ──────────────────────
+  const [focusMapa, setFocusMapa] = useState(null);
+  const [trajecteActiu, setTrajecteActiu] = useState(null);
+
   // ─── Càrrega inicial ───────────────────────────────────────
   const carregarDades = useCallback(async () => {
     try {
@@ -133,7 +137,16 @@ function Dashboard() {
     };
   }, [socket]);
 
-  // ─── Handlers amb useCallback ──────────────────────────────
+  // ─── Helper: crear objecte focusMapa segur ─────────────────
+  const crearFocus = useCallback((lat, lon) => {
+    const latNum = parseFloat(lat);
+    const lonNum = parseFloat(lon);
+    if (!Number.isFinite(latNum) || !Number.isFinite(lonNum)) return null;
+    return { lat: latNum, lon: lonNum };
+  }, []);
+
+  // ─── Handlers ──────────────────────────────────────────────
+
   const handleIncidenciaActualitzada = useCallback((id, canvis) => {
     setIncidencies((prev) =>
       prev.map((inc) => (inc.id === id ? { ...inc, ...canvis } : inc))
@@ -143,23 +156,66 @@ function Dashboard() {
     );
   }, []);
 
-  const handleSeleccionarIncidencia = useCallback((incidencia) => {
+  const handleSeleccionarIncidencia = useCallback((incidencia, indicatiuOrigen = null) => {
     setIncidenciaSeleccionada(incidencia);
     setIndicatiuSeleccionat(null);
     setMostrarDetallMobile(true);
     setMostrarLlistaMobile(false);
-  }, []);
+
+    // Enfocar mapa a la incidència (només si coords vàlides)
+    const focus = crearFocus(incidencia?.ubicacio_lat, incidencia?.ubicacio_lon);
+    if (focus) {
+      setFocusMapa((prev) => ({
+        ...focus,
+        seq: (prev?.seq || 0) + 1,
+      }));
+    }
+
+    // Trajecte: si venim d'un indicatiu, dibuixar línia
+    if (indicatiuOrigen) {
+      const oLat = parseFloat(indicatiuOrigen.ubicacio_lat);
+      const oLon = parseFloat(indicatiuOrigen.ubicacio_lon);
+      const dLat = parseFloat(incidencia?.ubicacio_lat);
+      const dLon = parseFloat(incidencia?.ubicacio_lon);
+
+      if ([oLat, oLon, dLat, dLon].every(Number.isFinite)) {
+        setTrajecteActiu({
+          origenLat: oLat,
+          origenLon: oLon,
+          destiLat: dLat,
+          destiLon: dLon,
+        });
+      } else {
+        setTrajecteActiu(null);
+      }
+    } else {
+      setTrajecteActiu(null);
+    }
+  }, [crearFocus]);
 
   const handleSeleccionarIndicatiu = useCallback((indicatiu) => {
     setIndicatiuSeleccionat(indicatiu);
     setIncidenciaSeleccionada(null);
     setMostrarDetallMobile(true);
     setMostrarLlistaMobile(false);
-  }, []);
+
+    // Enfocar mapa a l'indicatiu (només si coords vàlides)
+    const focus = crearFocus(indicatiu?.ubicacio_lat, indicatiu?.ubicacio_lon);
+    if (focus) {
+      setFocusMapa((prev) => ({
+        ...focus,
+        seq: (prev?.seq || 0) + 1,
+      }));
+    }
+
+    // Netejar trajecte explícit — el Mapa el calcularà automàticament
+    setTrajecteActiu(null);
+  }, [crearFocus]);
 
   const handleTancarDetall = useCallback(() => {
     setIncidenciaSeleccionada(null);
     setIndicatiuSeleccionat(null);
+    setTrajecteActiu(null);
     setMostrarDetallMobile(false);
   }, []);
 
@@ -188,6 +244,20 @@ function Dashboard() {
 
   const hiHaDetallObert = incidenciaSeleccionada || indicatiuSeleccionat;
 
+  // ─── Props comunes del mapa ────────────────────────────────
+  const propsMapaComunes = {
+    incidencies,
+    indicatius,
+    onSeleccionarIncidencia: handleSeleccionarIncidencia,
+    onSeleccionarIndicatiu: handleSeleccionarIndicatiu,
+    incidenciaSeleccionada,
+    indicatiuSeleccionat,
+    filtres: filtresMapa,
+    onCanviFiltres: setFiltresMapa,
+    focusMapa,
+    trajecteActiu,
+  };
+
   return (
     <div className="relative h-full overflow-hidden bg-gray-100">
 
@@ -213,16 +283,7 @@ function Dashboard() {
               </div>
             </div>
           ) : (
-            <Mapa
-              incidencies={incidencies}
-              indicatius={indicatius}
-              onSeleccionarIncidencia={handleSeleccionarIncidencia}
-              onSeleccionarIndicatiu={handleSeleccionarIndicatiu}
-              incidenciaSeleccionada={incidenciaSeleccionada}
-              indicatiuSeleccionat={indicatiuSeleccionat}
-              filtres={filtresMapa}
-              onCanviFiltres={setFiltresMapa}
-            />
+            <Mapa {...propsMapaComunes} />
           )}
         </div>
 
@@ -257,16 +318,7 @@ function Dashboard() {
             </div>
           </div>
         ) : (
-          <Mapa
-            incidencies={incidencies}
-            indicatius={indicatius}
-            onSeleccionarIncidencia={handleSeleccionarIncidencia}
-            onSeleccionarIndicatiu={handleSeleccionarIndicatiu}
-            incidenciaSeleccionada={incidenciaSeleccionada}
-            indicatiuSeleccionat={indicatiuSeleccionat}
-            filtres={filtresMapa}
-            onCanviFiltres={setFiltresMapa}
-          />
+          <Mapa {...propsMapaComunes} />
         )}
 
         <button

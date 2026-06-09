@@ -1,5 +1,3 @@
-// src/components/DetallIndicatiu.jsx
-
 import { useState, useEffect, useCallback, memo } from "react";
 import {
   getIndicatiu,
@@ -305,7 +303,7 @@ function DetallIndicatiu({ indicatiu, onTancar, onVeureIncidencia }) {
 
                   {onVeureIncidencia && (
                     <button
-                      onClick={() => onVeureIncidencia(incidenciaAssignada)}
+                      onClick={() => onVeureIncidencia(incidenciaAssignada, ind)}
                       className="w-full py-2 px-3 rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                     >
                       📋 Veure detalls de la incidència

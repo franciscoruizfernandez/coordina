@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import {
   MapContainer,
   TileLayer,
   ZoomControl,
   ScaleControl,
+  Polyline,
   useMap,
 } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
@@ -90,6 +91,39 @@ function BotoCentrar() {
   );
 }
 
+// ─── Component intern: controlador d'enfoc per selecció ─────
+function ControladorEnfoc({ focusMapa }) {
+  const mapa = useMap();
+  const lastSeqRef = useRef(0);
+
+  useEffect(() => {
+    // Només actuar si hi ha un seq nou
+    if (!focusMapa || focusMapa.seq === lastSeqRef.current) return;
+
+    const { lat, lon, seq } = focusMapa;
+
+    // Validar que les coordenades siguin números finits
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+
+    // Marcar com processat
+    lastSeqRef.current = seq;
+
+    // Esperar un tick perquè el mapa estigui llest
+    requestAnimationFrame(() => {
+      try {
+        mapa.flyTo([lat, lon], 12, {
+          animate: true,
+          duration: 0.8,
+        });
+      } catch (err) {
+        console.warn('⚠️ Error fent flyTo:', err);
+      }
+    });
+  }, [mapa, focusMapa]);
+
+  return null;
+}
+
 // ─── Component principal ────────────────────────────────────
 function Mapa({
   incidencies = [],
@@ -100,19 +134,19 @@ function Mapa({
   indicatiuSeleccionat = null,
   filtres = {},
   onCanviFiltres,
+  focusMapa = null,
+  trajecteActiu = null,
 }) {
   // ─── Filtrar incidències segons els controls ────────────────
   const incidenciesFiltrades = useMemo(() => {
     let resultat = [...incidencies];
 
-    // Filtrar tancades/resoltes
     if (!filtres.mostrarTancades) {
       resultat = resultat.filter(
         (inc) => inc.estat !== 'tancada' && inc.estat !== 'resolta'
       );
     }
 
-    // Filtrar per prioritat
     if (filtres.prioritatMapa && filtres.prioritatMapa !== 'totes') {
       resultat = resultat.filter(
         (inc) => inc.prioritat === filtres.prioritatMapa
@@ -126,7 +160,6 @@ function Mapa({
   const indicatiusFiltrats = useMemo(() => {
     let resultat = [...indicatius];
 
-    // Filtrar no disponibles
     if (!filtres.mostrarNoDisponibles) {
       resultat = resultat.filter(
         (ind) => ind.estat_operatiu !== 'no_disponible'
@@ -135,6 +168,44 @@ function Mapa({
 
     return resultat;
   }, [indicatius, filtres.mostrarNoDisponibles]);
+
+  // ─── Calcular línia de trajecte ─────────────────────────────
+  const liniaTrajecte = useMemo(() => {
+    // 1) Trajecte explícit (ve del botó "Veure detalls incidència")
+    if (trajecteActiu) {
+      const { origenLat, origenLon, destiLat, destiLon } = trajecteActiu;
+      if ([origenLat, origenLon, destiLat, destiLon].every(Number.isFinite)) {
+        return [
+          [origenLat, origenLon],
+          [destiLat, destiLon],
+        ];
+      }
+    }
+
+    // 2) Trajecte automàtic: indicatiu seleccionat amb incidència assignada
+    if (indicatiuSeleccionat?.incidencia_assignada_id) {
+      const ind = indicatiuSeleccionat;
+      const inc = incidencies.find(
+        (item) => String(item.id) === String(ind.incidencia_assignada_id)
+      );
+
+      if (inc) {
+        const latInd = parseFloat(ind.ubicacio_lat);
+        const lonInd = parseFloat(ind.ubicacio_lon);
+        const latInc = parseFloat(inc.ubicacio_lat);
+        const lonInc = parseFloat(inc.ubicacio_lon);
+
+        if ([latInd, lonInd, latInc, lonInc].every(Number.isFinite)) {
+          return [
+            [latInd, lonInd],
+            [latInc, lonInc],
+          ];
+        }
+      }
+    }
+
+    return null;
+  }, [trajecteActiu, indicatiuSeleccionat, incidencies]);
 
   return (
     <div className="relative w-full h-full">
@@ -164,6 +235,21 @@ function Mapa({
         <ZoomControl position="topright" />
         <ScaleControl position="bottomleft" imperial={false} />
         <BotoCentrar />
+        <ControladorEnfoc focusMapa={focusMapa} />
+
+        {/* Línia de trajecte indicatiu → incidència */}
+        {liniaTrajecte && (
+          <Polyline
+            positions={liniaTrajecte}
+            pathOptions={{
+              color: "#2563EB",
+              weight: 4,
+              opacity: 0.55,
+              dashArray: "12 8",
+              lineCap: "round",
+            }}
+          />
+        )}
 
         {/* Incidències amb clustering */}
         <MarkerClusterGroup
