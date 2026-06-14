@@ -17,9 +17,9 @@ const pool = new Pool({
     rejectUnauthorized: false, // Necessari per Supabase
   },
   // Configuració del pool
-  max: 20, // Màxim de connexions simultànies
+  max: 50, // Màxim de connexions simultànies
   idleTimeoutMillis: 30000, // Temps abans de tancar connexió inactiva
-  connectionTimeoutMillis: 2000, // Temps màxim per establir connexió
+  connectionTimeoutMillis: 60000, // Temps màxim per establir connexió
 });
 
 // ==============================================================
